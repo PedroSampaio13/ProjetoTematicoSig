@@ -1,20 +1,50 @@
 <script lang="ts">
-	import Map from '$lib/components/Map.svelte';
+  import Navbar from '$lib/components/Navbar.svelte';
+  import Sidebar from '$lib/components/Sidebar.svelte';
+  import MapComponent from '$lib/components/Map.svelte';
 
-	let message = '';
+  let mapRef: MapComponent;
 
-	async function testar() {
-		const res = await fetch('http://localhost:8000/test');
-		const data = await res.json();
+  function handleSearch(query: string) {
+    console.log('Pesquisa:', query);
+    // TODO: ligar ao backend FastAPI
+  }
 
-		message = data.message;
-	}
+  function handleFiltersChange(filters: { categories: Set<string>; radius: number }) {
+    console.log('Filtros:', filters);
+    // TODO: ligar ao backend FastAPI
+  }
 </script>
 
-<button on:click={testar}>
-	Testar API
-</button>
+<div class="app-layout">
+  <Navbar />
+  <div class="app-body">
+    <Sidebar onSearch={handleSearch} onFiltersChange={handleFiltersChange} />
+    <main class="map-area">
+      <MapComponent bind:this={mapRef} />
+    </main>
+  </div>
+</div>
 
-<p>{message}</p>
+<style>
+  .app-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
 
-<Map />
+  .app-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    margin-top: var(--navbar-height);
+  }
+
+  .map-area {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    height: 100%;
+    overflow: hidden;
+  }
+</style>
