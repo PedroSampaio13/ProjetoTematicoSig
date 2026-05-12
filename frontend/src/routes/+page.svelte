@@ -5,6 +5,15 @@
 
   let mapRef: MapComponent;
 
+  let message = '';
+
+  async function testar() {
+    const res = await fetch('http://localhost:8000/test');
+    const data = await res.json();
+
+    message = data.message;
+  }
+
   function handleSearch(query: string) {
     console.log('Pesquisa:', query);
     // TODO: ligar ao backend FastAPI
@@ -18,8 +27,18 @@
 
 <div class="app-layout">
   <Navbar />
+
+  <div class="test-api">
+    <button on:click={testar}>
+      Testar API
+    </button>
+
+    <p>{message}</p>
+  </div>
+
   <div class="app-body">
     <Sidebar onSearch={handleSearch} onFiltersChange={handleFiltersChange} />
+
     <main class="map-area">
       <MapComponent bind:this={mapRef} />
     </main>
@@ -46,5 +65,16 @@
     margin-left: var(--sidebar-width);
     height: 100%;
     overflow: hidden;
+  }
+
+  .test-api {
+    position: absolute;
+    top: 80px;
+    right: 20px;
+    z-index: 1000;
+
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
   }
 </style>
