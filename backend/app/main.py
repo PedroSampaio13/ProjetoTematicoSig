@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db.db import test_connection
+from app.db.setup import run_create_tables_script
 
 app = FastAPI(title="SIG API")
 
@@ -28,3 +29,10 @@ def db_test():
         "message": "Ligação à base de dados OK",
         "postgres_version": version
     }
+
+# Endpoint de setup desativado para evitar uso acidental.
+# Descomenta apenas quando precisares criar as tabelas manualmente.
+# @app.post("/setup/create-tables")
+# def create_tables():
+#     run_create_tables_script()
+#     return {"message": "Tabelas criadas com sucesso"}
