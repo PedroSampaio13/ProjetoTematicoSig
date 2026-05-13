@@ -135,6 +135,23 @@
     popup?.setPosition(undefined);
   }
 
+  export function focusPlace(place: {
+    nome: string;
+    categoria: string;
+    morada?: string;
+    lat: number;
+    lon: number;
+  }) {
+    const coords = fromLonLat([place.lon, place.lat]);
+    map.getView().animate({ center: coords, zoom: 15, duration: 600 });
+    popup.setPosition(coords);
+    popupData = {
+      nome: place.nome,
+      categoria: place.categoria,
+      morada: place.morada,
+    };
+  }
+
   onDestroy(() => map?.dispose());
 </script>
 

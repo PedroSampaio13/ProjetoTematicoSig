@@ -3,8 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.db.db import test_connection
 from app.db.setup import run_create_tables_script
+from app.routers import places
 
 app = FastAPI(title="SIG API")
+
+app.include_router(places.router)
 
 app.add_middleware(
     CORSMiddleware,

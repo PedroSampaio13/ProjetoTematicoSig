@@ -1,24 +1,30 @@
 <script lang="ts">
-  // props e estado do componente
-  let {
-    onSearch = (_q: string) => {},
-    onFiltersChange = (_f: Filters) => {},
-  }: {
-    onSearch?: (query: string) => void;
-    onFiltersChange?: (filters: Filters) => void;
-  } = $props();
-
-  export interface Filters {
-    categories: Set<Category>;
-    time: number;
-  }
-
   type Category = 'farmacia' | 'hospital' | 'restaurante';
 
-  // Estado de pesquisa
-  let searchQuery = $state('');
+  type Place = {
+    id: string | number;
+    nome: string;
+    morada?: string;
+    lat: number;
+    lon: number;
+    categoria: Category;
+  };
 
-  // Estado dos filtros
+  let {
+    onSearch = (_q: string, _c: Set<Category>) => {},
+    onPlaceClick = (_p: Place) => {},
+    places = [] as Place[],
+    loading = false,
+    searched = false,
+  }: {
+    onSearch?: (query: string, categories: Set<Category>) => void;
+    onPlaceClick?: (place: Place) => void;
+    places?: Place[];
+    loading?: boolean;
+    searched?: boolean;
+  } = $props();
+
+  let searchQuery = $state('');
   let activeCategories = $state<Set<Category>>(new Set(['farmacia', 'hospital', 'restaurante']));
   let activeTime = $state<number>(15);
 
@@ -28,37 +34,42 @@
     { id: 'restaurante' as Category, label: 'Restaurantes', color: 'var(--color-restaurante)', icon: '🍽️' },
   ];
 
+  const CAT_COLORS: Record<Category, string> = {
+    farmacia:    'var(--color-farmacia)',
+    hospital:    'var(--color-hospital)',
+    restaurante: 'var(--color-restaurante)',
+  };
+
+  const CAT_LABELS: Record<Category, string> = {
+    farmacia:    'Farmácia',
+    hospital:    'Hospital',
+    restaurante: 'Restaurante',
+  };
+
   const TIMES = [5, 15, 25];
 
-  // avisa o componente pai sempre que os filtros mudam
   function toggleCategory(cat: Category) {
     const next = new Set(activeCategories);
     if (next.has(cat)) {
-      if (next.size > 1) next.delete(cat); // pelo menos 1 ativa
+      if (next.size > 1) next.delete(cat);
     } else {
       next.add(cat);
     }
     activeCategories = next;
-    emitFilters();
   }
 
   function setTime(t: number) {
     activeTime = t;
-    emitFilters();
-  }
-
-  function emitFilters() {
-    onFiltersChange({ categories: activeCategories, time: activeTime });
   }
 
   function handleSearch(e: Event) {
     e.preventDefault();
-    onSearch(searchQuery);
+    onSearch(searchQuery, activeCategories);
   }
 
   function clearSearch() {
     searchQuery = '';
-    onSearch('');
+    onSearch('', activeCategories);
   }
 </script>
 
@@ -131,18 +142,58 @@
 
   <div class="sidebar-divider"></div>
 
-  <!-- Resultados (slot para a lista) -->
+  <!-- Resultados -->
   <div class="sidebar-results" role="region" aria-label="Resultados">
     <div class="results-header">
       <p class="section-label">Resultados</p>
-      <span class="results-count">—</span>
+      {#if searched && !loading}
+        <span class="results-count">{places.length}</span>
+      {:else}
+        <span class="results-count">—</span>
+      {/if}
     </div>
-    <div class="results-empty">
-      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.3">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-      </svg>
-      <p>Usa a pesquisa ou clica no mapa</p>
-    </div>
+
+    {#if loading}
+      <div class="results-empty">
+        <span class="spinner" aria-label="A carregar"></span>
+      </div>
+    {:else if !searched}
+      <div class="results-empty">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.3">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <p>Usa a pesquisa ou clica no mapa</p>
+      </div>
+    {:else if places.length === 0}
+      <div class="results-empty">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.3">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <p>Nenhum resultado encontrado</p>
+      </div>
+    {:else}
+      <ul class="result-list">
+        {#each places as place}
+          <li>
+            <button class="result-item" onclick={() => onPlaceClick(place)}>
+              <span
+                class="result-dot"
+                style="background: {CAT_COLORS[place.categoria]}"
+              ></span>
+              <span class="result-info">
+                <span class="result-nome">{place.nome}</span>
+                {#if place.morada}
+                  <span class="result-morada">{place.morada}</span>
+                {/if}
+                <span class="result-cat" style="color: {CAT_COLORS[place.categoria]}">
+                  {CAT_LABELS[place.categoria]}
+                </span>
+              </span>
+            </button>
+          </li>
+        {/each}
+      </ul>
+    {/if}
   </div>
 </aside>
 
@@ -162,7 +213,6 @@
     z-index: 50;
   }
 
-  /* Secções */
   .sidebar-section {
     padding: 16px 16px 14px;
   }
@@ -182,7 +232,6 @@
     margin-bottom: 10px;
   }
 
-  /* campo de pesquisa */
   .search-wrapper {
     position: relative;
     display: flex;
@@ -218,7 +267,6 @@
     box-shadow: 0 0 0 3px var(--color-farmacia-10);
   }
 
-  /* esconde o X nativo do browser no input search */
   .search-input::-webkit-search-cancel-button { display: none; }
 
   .search-clear {
@@ -236,7 +284,6 @@
 
   .search-clear:hover { color: var(--text-primary); }
 
-  /* botões de categoria */
   .category-chips {
     display: flex;
     flex-direction: column;
@@ -285,7 +332,6 @@
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--chip-color) 20%, transparent);
   }
 
-  /* botões de tempo a pé */
   .radius-buttons {
     display: flex;
     gap: 6px;
@@ -317,7 +363,6 @@
     font-weight: 600;
   }
 
-  /* Resultados */
   .sidebar-results {
     flex: 1;
     overflow-y: auto;
@@ -352,5 +397,89 @@
   .results-empty p {
     font-size: 12.5px;
     line-height: 1.5;
+  }
+
+  /* Spinner */
+  .spinner {
+    display: block;
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--color-farmacia);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Lista de resultados */
+  .result-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .result-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 10px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    text-align: left;
+    transition: background var(--transition), border-color var(--transition);
+  }
+
+  .result-item:hover {
+    background: var(--bg-input);
+    border-color: var(--border);
+  }
+
+  .result-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .result-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .result-nome {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .result-morada {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .result-cat {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 </style>

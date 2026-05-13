@@ -5,21 +5,42 @@
 
   let mapRef: MapComponent;
 
-  function handleSearch(query: string) {
-    console.log('Pesquisa:', query);
-    // TODO: ligar ao backend FastAPI
+  let places = $state<any[]>([]);
+  let loading = $state(false);
+  let searched = $state(false);
+
+  async function fetchPlaces(query: string, categories: Set<string>) {
+    loading = true;
+    searched = true;
+    try {
+      const activeCats = [...categories];
+      const results = await Promise.all(
+        activeCats.map((cat) => {
+          const params = new URLSearchParams({ categoria: cat });
+          if (query) params.set('query', query);
+          return fetch(`http://localhost:8000/places/?${params}`).then((r) => r.json());
+        })
+      );
+      places = results.flat();
+      mapRef?.addMarkers(places);
+    } finally {
+      loading = false;
+    }
   }
 
-  function handleFiltersChange(filters: { categories: Set<string>; radius: number }) {
-    console.log('Filtros:', filters);
-    // TODO: ligar ao backend FastAPI
+  function handleSearch(query: string, categories: Set<string>) {
+    fetchPlaces(query, categories);
+  }
+
+  function onPlaceClick(place: any) {
+    mapRef?.focusPlace(place);
   }
 </script>
 
 <div class="app-layout">
   <Navbar />
   <div class="app-body">
-    <Sidebar onSearch={handleSearch} onFiltersChange={handleFiltersChange} />
+    <Sidebar onSearch={handleSearch} {places} {loading} {searched} {onPlaceClick} />
     <main class="map-area">
       <MapComponent bind:this={mapRef} />
     </main>
