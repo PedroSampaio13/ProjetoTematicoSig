@@ -39,6 +39,7 @@
 
 <div class="app-layout">
   <Navbar />
+
   <div class="app-body">
     <Sidebar onSearch={handleSearch} {places} {loading} {searched} {onPlaceClick} />
     <main class="map-area">
