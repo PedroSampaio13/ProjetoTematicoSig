@@ -1,9 +1,21 @@
 <script lang="ts">
   import { fade, scale } from 'svelte/transition';
 
-  let { onResults, onCenter }: {
+  type SelectedLocation = {
+    lat: number;
+    lon: number;
+  };
+
+  let {
+    onResults,
+    onCenter,
+    onRouteArea = (_routeArea: object | null) => {},
+    selectedLocation = null,
+  }: {
     onResults: (places: any[]) => void;
     onCenter: (lat: number, lon: number) => void;
+    onRouteArea?: (routeArea: object | null) => void;
+    selectedLocation?: SelectedLocation | null;
   } = $props();
 
   let isOpen = $state(false);
@@ -11,9 +23,6 @@
   let tempo = $state(15);
   let loading = $state(false);
   let error = $state<string | null>(null);
-
-  // Raio aproximado em graus de latitude para tempo a pé (~83m/min)
-  const RADIUS_DEG: Record<number, number> = { 5: 0.004, 15: 0.012, 25: 0.020 };
 
   const categorias = [
     { id: 'farmacia',    label: 'Farmácia' },
@@ -23,12 +32,12 @@
 
   const tempos = [5, 15, 25] as const;
 
-  function open() {
+  export function open() {
     isOpen = true;
     error = null;
   }
 
-  function close() {
+  export function close() {
     isOpen = false;
     error = null;
     loading = false;
@@ -38,33 +47,51 @@
     if ((e.target as HTMLElement).classList.contains('modal-backdrop')) close();
   }
 
+  async function runSearch(lat: number, lon: number) {
+    const res = await fetch('http://localhost:8000/places/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        lat,
+        lon,
+        max_travel_time: tempo,
+        categorias: [categoria],
+      }),
+    });
+
+    if (!res.ok) throw new Error();
+    const search = await res.json();
+    const nearby: any[] = search.results;
+
+    onRouteArea(search.route_area ?? null);
+    onResults(nearby);
+    onCenter(lat, lon);
+    close();
+  }
+
   async function handleLocalizacao() {
-    if (!navigator.geolocation) {
-      error = 'Geolocalização não suportada neste browser.';
-      return;
-    }
     loading = true;
     error = null;
 
+    if (selectedLocation) {
+      try {
+        await runSearch(selectedLocation.lat, selectedLocation.lon);
+      } catch {
+        error = 'Erro ao carregar locais. Tente novamente.';
+        loading = false;
+      }
+      return;
+    }
+    if (!navigator.geolocation) {
+      error = 'Geolocalização não suportada neste browser.';
+      loading = false;
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const userLat = pos.coords.latitude;
-        const userLon = pos.coords.longitude;
         try {
-          const res = await fetch(`http://localhost:8000/places/?categoria=${categoria}`);
-          if (!res.ok) throw new Error();
-          const all: any[] = await res.json();
-
-          const radius = RADIUS_DEG[tempo];
-          const nearby = all.filter((p) => {
-            const dlat = p.lat - userLat;
-            const dlon = p.lon - userLon;
-            return Math.sqrt(dlat * dlat + dlon * dlon) <= radius;
-          });
-
-          onResults(nearby);
-          onCenter(userLat, userLon);
-          close();
+          await runSearch(pos.coords.latitude, pos.coords.longitude);
         } catch {
           error = 'Erro ao carregar locais. Tente novamente.';
           loading = false;
@@ -141,6 +168,12 @@
         </div>
       </div>
 
+      {#if selectedLocation}
+        <p class="selected-location" transition:fade={{ duration: 150 }}>
+          Localização selecionada no mapa
+        </p>
+      {/if}
+
       <!-- Erro -->
       {#if error}
         <p class="modal-error" transition:fade={{ duration: 150 }}>{error}</p>
@@ -156,7 +189,7 @@
             <circle cx="12" cy="12" r="3"/>
             <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
           </svg>
-          Usar a minha localização
+          {selectedLocation ? 'Pesquisar nesta localização' : 'Usar a minha localização'}
         {/if}
       </button>
     </div>
@@ -314,6 +347,16 @@
     color: #EF4444;
     background: rgba(239, 68, 68, 0.08);
     border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    line-height: 1.4;
+  }
+
+  .selected-location {
+    font-size: 12.5px;
+    color: var(--color-hospital);
+    background: var(--color-hospital-10);
+    border: 1px solid color-mix(in srgb, var(--color-hospital) 22%, transparent);
     border-radius: var(--radius-md);
     padding: 8px 12px;
     line-height: 1.4;

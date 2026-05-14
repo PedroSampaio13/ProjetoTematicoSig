@@ -8,6 +8,8 @@
     lat: number;
     lon: number;
     categoria: Category;
+    distancia_m?: number;
+    tempo_min?: number;
   };
 
   let {
@@ -70,6 +72,11 @@
   function clearSearch() {
     searchQuery = '';
     onSearch('', activeCategories);
+  }
+
+  function formatDistance(meters: number) {
+    if (meters < 1000) return `${meters} m`;
+    return `${(meters / 1000).toFixed(1).replace('.', ',')} km`;
   }
 </script>
 
@@ -184,6 +191,19 @@
                 <span class="result-nome">{place.nome}</span>
                 {#if place.morada}
                   <span class="result-morada">{place.morada}</span>
+                {/if}
+                {#if place.distancia_m !== undefined || place.tempo_min !== undefined}
+                  <span class="result-metrics">
+                    {#if place.distancia_m !== undefined}
+                      {formatDistance(place.distancia_m)}
+                    {/if}
+                    {#if place.distancia_m !== undefined && place.tempo_min !== undefined}
+                      ·
+                    {/if}
+                    {#if place.tempo_min !== undefined}
+                      {place.tempo_min} min
+                    {/if}
+                  </span>
                 {/if}
                 <span class="result-cat" style="color: {CAT_COLORS[place.categoria]}">
                   {CAT_LABELS[place.categoria]}
@@ -474,6 +494,12 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .result-metrics {
+    font-size: 11.5px;
+    color: var(--text-primary);
+    font-weight: 600;
   }
 
   .result-cat {

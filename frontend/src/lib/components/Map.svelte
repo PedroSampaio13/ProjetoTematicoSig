@@ -10,6 +10,7 @@
   import VectorSource from 'ol/source/Vector';
   import Feature from 'ol/Feature';
   import Point from 'ol/geom/Point';
+  import GeoJSON from 'ol/format/GeoJSON';
   import { fromLonLat, toLonLat } from 'ol/proj';
   import { Style, Circle, Fill, Stroke, Text } from 'ol/style';
   import Overlay from 'ol/Overlay';
@@ -34,15 +35,51 @@
     restaurante: 'Restaurante',
   };
 
+  type SelectedLocation = {
+    lat: number;
+    lon: number;
+  };
+
+  type Place = {
+    id?: string | number;
+    nome: string;
+    categoria: string;
+    morada?: string;
+    lat: number;
+    lon: number;
+    distancia_m?: number;
+    tempo_min?: number;
+  };
+
+  let {
+    onLocationSelect = (_location: SelectedLocation) => {},
+    onPlaceSelect = (_place: Place) => {},
+  }: {
+    onLocationSelect?: (location: SelectedLocation) => void;
+    onPlaceSelect?: (place: Place) => void;
+  } = $props();
+
   let mapContainer: HTMLDivElement;
   let popupEl: HTMLDivElement;
   let map: OlMap;
   let tileLayer: TileLayer<XYZ>;
   let vectorSource = new VectorSource();
+  let routeAreaSource = new VectorSource();
+  let routeSource = new VectorSource();
+  let selectedLocationSource = new VectorSource();
   let popup: Overlay;
 
   // dados do popup aberto (null = fechado)
-  let popupData: { nome: string; categoria: string; morada?: string; aberto?: boolean; lat: number; lon: number } | null = $state(null);
+  let popupData: {
+    nome: string;
+    categoria: string;
+    morada?: string;
+    aberto?: boolean;
+    lat: number;
+    lon: number;
+    distancia_m?: number;
+    tempo_min?: number;
+  } | null = $state(null);
 
   onMount(() => {
     tileLayer = new TileLayer({
@@ -51,6 +88,25 @@
 
     const vectorLayer = new VectorLayer({
       source: vectorSource,
+    });
+
+    const routeAreaLayer = new VectorLayer({
+      source: routeAreaSource,
+      style: new Style({
+        fill: new Fill({ color: 'rgba(22, 168, 94, 0.16)' }),
+        stroke: new Stroke({ color: 'rgba(22, 168, 94, 0.72)', width: 2 }),
+      }),
+    });
+
+    const routeLayer = new VectorLayer({
+      source: routeSource,
+      style: new Style({
+        stroke: new Stroke({ color: '#F59E0B', width: 5 }),
+      }),
+    });
+
+    const selectedLocationLayer = new VectorLayer({
+      source: selectedLocationSource,
     });
 
     popup = new Overlay({
@@ -62,7 +118,7 @@
 
     map = new OlMap({
       target: mapContainer,
-      layers: [tileLayer, vectorLayer],
+      layers: [tileLayer, routeAreaLayer, routeLayer, vectorLayer, selectedLocationLayer],
       overlays: [popup],
       view: new View({
         center: fromLonLat([-8.2, 39.5]),
@@ -75,29 +131,48 @@
     // Click em marcador → abrir popup
     map.on('click', (evt) => {
       const feature = map.forEachFeatureAtPixel(evt.pixel, f => f);
-      if (feature) {
+      if (
+        feature
+        && feature.get('kind') !== 'selected-location'
+        && feature.get('kind') !== 'route-area'
+        && feature.get('kind') !== 'route'
+      ) {
         const props = feature.getProperties();
         const geom = feature.getGeometry() as Point;
         const coords3857 = geom.getCoordinates();
         const [lon, lat] = toLonLat(coords3857);
         popup.setPosition(coords3857);
-        popupData = {
+        const selectedPlace = {
+          id: props.id,
           nome: props.nome ?? 'Local',
           categoria: props.categoria ?? 'farmacia',
           morada: props.morada,
-          aberto: props.aberto,
           lat,
           lon,
+          distancia_m: props.distancia_m,
+          tempo_min: props.tempo_min,
         };
+        popupData = {
+          ...selectedPlace,
+          aberto: props.aberto,
+        };
+        onPlaceSelect(selectedPlace);
       } else {
         popupData = null;
         popup.setPosition(undefined);
+        const [lon, lat] = toLonLat(evt.coordinate);
+        setSelectedLocation(lat, lon);
+        onLocationSelect({ lat, lon });
       }
     });
 
     // Cursor pointer sobre marcadores
     map.on('pointermove', (evt) => {
-      const hit = map.hasFeatureAtPixel(evt.pixel);
+      const hit = map.forEachFeatureAtPixel(evt.pixel, f => (
+        f.get('kind') !== 'selected-location'
+        && f.get('kind') !== 'route-area'
+        && f.get('kind') !== 'route'
+      ));
       (map.getTargetElement() as HTMLElement).style.cursor = hit ? 'pointer' : '';
     });
   });
@@ -117,16 +192,21 @@
     lon: number;
     morada?: string;
     aberto?: boolean;
+    distancia_m?: number;
+    tempo_min?: number;
   }>) {
     vectorSource.clear();
     for (const p of places) {
       const color = CAT_COLORS[p.categoria];
       const feature = new Feature({
         geometry: new Point(fromLonLat([p.lon, p.lat])),
+        id: p.id,
         nome: p.nome,
         categoria: p.categoria,
         morada: p.morada,
         aberto: p.aberto,
+        distancia_m: p.distancia_m,
+        tempo_min: p.tempo_min,
       });
       feature.setStyle(new Style({
         image: new Circle({
@@ -145,12 +225,73 @@
     popup?.setPosition(undefined);
   }
 
+  export function drawRouteArea(routeArea: object) {
+    routeAreaSource.clear();
+
+    const features = new GeoJSON().readFeatures(routeArea, {
+      dataProjection: 'EPSG:4326',
+      featureProjection: 'EPSG:3857',
+    });
+
+    for (const feature of features) {
+      feature.set('kind', 'route-area');
+      routeAreaSource.addFeature(feature);
+    }
+  }
+
+  export function clearRouteArea() {
+    routeAreaSource.clear();
+  }
+
+  export function drawRoute(routeGeometry: object) {
+    routeSource.clear();
+
+    const features = new GeoJSON().readFeatures(routeGeometry, {
+      dataProjection: 'EPSG:4326',
+      featureProjection: 'EPSG:3857',
+    });
+
+    for (const feature of features) {
+      feature.set('kind', 'route');
+      routeSource.addFeature(feature);
+    }
+  }
+
+  export function clearRoute() {
+    routeSource.clear();
+  }
+
+  export function setSelectedLocation(lat: number, lon: number) {
+    selectedLocationSource.clear();
+
+    const feature = new Feature({
+      geometry: new Point(fromLonLat([lon, lat])),
+      kind: 'selected-location',
+    });
+
+    feature.setStyle(new Style({
+      image: new Circle({
+        radius: 11,
+        fill: new Fill({ color: '#EF4444' }),
+        stroke: new Stroke({ color: 'rgba(255,255,255,0.95)', width: 3 }),
+      }),
+    }));
+
+    selectedLocationSource.addFeature(feature);
+  }
+
+  export function clearSelectedLocation() {
+    selectedLocationSource.clear();
+  }
+
   export function focusPlace(place: {
     nome: string;
     categoria: string;
     morada?: string;
     lat: number;
     lon: number;
+    distancia_m?: number;
+    tempo_min?: number;
   }) {
     const coords = fromLonLat([place.lon, place.lat]);
     map.getView().animate({ center: coords, zoom: 15, duration: 600 });
@@ -161,7 +302,14 @@
       morada: place.morada,
       lat: place.lat,
       lon: place.lon,
+      distancia_m: place.distancia_m,
+      tempo_min: place.tempo_min,
     };
+  }
+
+  function formatDistance(meters: number) {
+    if (meters < 1000) return `${meters} m`;
+    return `${(meters / 1000).toFixed(1).replace('.', ',')} km`;
   }
 
   export function centerMap(lat: number, lon: number, zoom = 14) {
@@ -201,6 +349,20 @@
         <!-- Morada -->
         {#if popupData.morada}
           <p class="popup-morada">{popupData.morada}</p>
+        {/if}
+
+        {#if popupData.distancia_m !== undefined || popupData.tempo_min !== undefined}
+          <p class="popup-metrics">
+            {#if popupData.distancia_m !== undefined}
+              {formatDistance(popupData.distancia_m)}
+            {/if}
+            {#if popupData.distancia_m !== undefined && popupData.tempo_min !== undefined}
+              ·
+            {/if}
+            {#if popupData.tempo_min !== undefined}
+              {popupData.tempo_min} min
+            {/if}
+          </p>
         {/if}
 
         <!-- Estado aberto/fechado -->
@@ -326,6 +488,14 @@
     color: var(--text-secondary);
     margin-bottom: 8px;
     line-height: 1.45;
+  }
+
+  .popup-metrics {
+    font-size: 12px;
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-bottom: 8px;
+    line-height: 1.4;
   }
 
   .popup-status {

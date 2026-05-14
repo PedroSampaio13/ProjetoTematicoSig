@@ -3,15 +3,19 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.db.db import test_connection
 from app.db.setup import run_create_tables_script
-from app.routers import places
+from app.routers import places, routes
 
 app = FastAPI(title="SIG API")
 
 app.include_router(places.router)
+app.include_router(routes.router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
