@@ -1,13 +1,13 @@
 <script lang="ts">
   import { theme } from '$lib/stores/theme';
 
-  // Qual tab está ativa — pode vir como prop ou ser gerida internamente
+  // tab activa — definida pela página que usa este componente
   let { activeTab = 'mapa' }: { activeTab?: 'mapa' | 'farmacias' | 'restaurantes' } = $props();
 
   const tabs = [
-    { id: 'mapa',         label: 'Mapa' },
-    { id: 'farmacias',    label: 'Farmácias' },
-    { id: 'restaurantes', label: 'Restaurantes' },
+    { id: 'mapa',         label: 'Mapa',         href: '/' },
+    { id: 'farmacias',    label: 'Farmácias',    href: '/farmacias' },
+    { id: 'restaurantes', label: 'Restaurantes', href: '/restaurantes' },
   ] as const;
 
   let isDark = $derived($theme === 'dark');
@@ -26,23 +26,23 @@
   </a>
 
   <!-- Tabs de navegação -->
-  <div class="navbar-tabs" role="tablist" aria-label="Categorias">
+  <nav class="navbar-tabs" aria-label="Categorias">
     {#each tabs as tab}
-      <button
+      <a
+        href={tab.href}
         role="tab"
         aria-selected={activeTab === tab.id}
         class="nav-tab"
         class:active={activeTab === tab.id}
-        onclick={() => activeTab = tab.id}
       >
         {tab.label}
-      </button>
+      </a>
     {/each}
-  </div>
+  </nav>
 
   <!-- Ações à direita -->
   <div class="navbar-actions">
-    <!-- Toggle dark/light -->
+    <!-- Botão para mudar o tema -->
     <button
       class="theme-toggle"
       onclick={theme.toggle}
@@ -50,7 +50,7 @@
       title={isDark ? 'Modo claro' : 'Modo escuro'}
     >
       {#if isDark}
-        <!-- Sun icon -->
+        <!-- Ícone de sol (modo escuro activo) -->
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="5"/>
           <line x1="12" y1="1" x2="12" y2="3"/>
@@ -63,7 +63,7 @@
           <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
         </svg>
       {:else}
-        <!-- Moon icon -->
+        <!-- Ícone de lua (modo claro activo) -->
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
         </svg>
@@ -145,6 +145,9 @@
     cursor: pointer;
     transition: color var(--transition), background var(--transition);
     white-space: nowrap;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
   }
 
   .nav-tab:hover {

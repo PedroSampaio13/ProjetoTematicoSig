@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import Navbar from '$lib/components/Navbar.svelte';
   import Sidebar from '$lib/components/Sidebar.svelte';
   import MapComponent from '$lib/components/Map.svelte';
@@ -29,6 +30,10 @@
     }
   }
 
+  onMount(() => {
+    fetchPlaces('', new Set(['farmacia']));
+  });
+
   function handleSearch(query: string, categories: Set<string>) {
     fetchPlaces(query, categories);
   }
@@ -49,7 +54,7 @@
 </script>
 
 <div class="app-layout">
-  <Navbar activeTab="mapa" />
+  <Navbar activeTab="farmacias" />
 
   <div class="app-body">
     <Sidebar onSearch={handleSearch} {places} {loading} {searched} {onPlaceClick} />
@@ -80,5 +85,6 @@
     margin-left: var(--sidebar-width);
     height: 100%;
     overflow: hidden;
+    position: relative;
   }
 </style>
