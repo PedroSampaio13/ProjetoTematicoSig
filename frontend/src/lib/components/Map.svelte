@@ -382,7 +382,7 @@
             Ver no mapa
           </button>
           <a
-            href="https://www.google.com/maps/dir/?api=1&destination={popupData.lat},{popupData.lon}"
+            href="https://www.google.com/maps/dir/?api=1&destination={popupData.lat},{popupData.lon}&travelmode=walking"
             target="_blank"
             rel="noopener noreferrer"
             class="popup-btn popup-btn-directions"

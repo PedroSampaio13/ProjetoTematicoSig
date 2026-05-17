@@ -1,5 +1,8 @@
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
@@ -11,6 +14,7 @@ from app.db.db import SessionLocal
 router = APIRouter(prefix="/places", tags=["places"])
 
 WALKING_METERS_PER_MINUTE = 83
+WALKING_ROUTE_URL = "https://routing.openstreetmap.de/routed-foot/route/v1/foot"
 
 
 class PlaceSearchRequest(BaseModel):
@@ -61,6 +65,70 @@ def format_places(rows):
         }
         for row in rows
     ]
+
+
+def calculate_walking_route(origin_lat: float, origin_lon: float, dest_lat: float, dest_lon: float):
+    url = (
+        f"{WALKING_ROUTE_URL}/"
+        f"{origin_lon},{origin_lat};{dest_lon},{dest_lat}"
+        "?overview=false&geometries=geojson&steps=false"
+    )
+
+    try:
+        with urlopen(url, timeout=10) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, KeyError):
+        return None
+
+    routes = data.get("routes", [])
+    if not routes:
+        return None
+
+    route = routes[0]
+    return {
+        "distance_m": round(route["distance"]),
+        "duration_min": max(1, round(route["duration"] / 60)),
+    }
+
+
+def format_places_with_walking_routes(rows, origin_lat: float, origin_lon: float, max_travel_time: int):
+    routed_places = []
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        route_jobs = {
+            executor.submit(
+                calculate_walking_route,
+                origin_lat,
+                origin_lon,
+                float(row[3]),
+                float(row[4]),
+            ): row
+            for row in rows
+        }
+
+        for job in as_completed(route_jobs):
+            row = route_jobs[job]
+            try:
+                route = job.result()
+            except Exception:
+                route = None
+            if not route or route["duration_min"] > max_travel_time:
+                continue
+
+            routed_places.append(
+                {
+                    "id": row[0],
+                    "nome": row[1],
+                    "morada": row[2],
+                    "lat": float(row[3]),
+                    "lon": float(row[4]),
+                    "categoria": row[5],
+                    "distancia_m": route["distance_m"],
+                    "tempo_min": route["duration_min"],
+                }
+            )
+
+    return sorted(routed_places, key=lambda place: (place["tempo_min"], place["distancia_m"]))[:50]
 
 
 def find_places_within_radius(
@@ -160,15 +228,21 @@ def create_place_search(
             },
         ).scalar_one()
 
-        rows = find_places_within_radius(
+        candidate_rows = find_places_within_radius(
             db=db,
             lat=payload.lat,
             lon=payload.lon,
             radius_m=radius_m,
             categorias=categorias,
         )
+        routed_places = format_places_with_walking_routes(
+            candidate_rows,
+            payload.lat,
+            payload.lon,
+            payload.max_travel_time,
+        )
 
-        for row in rows:
+        for place in routed_places:
             db.execute(
                 text("""
                     INSERT INTO map_result (
@@ -184,11 +258,8 @@ def create_place_search(
                 """),
                 {
                     "search_request_id": search_request_id,
-                    "poi_id": row[0],
-                    "estimated_time": max(
-                        1,
-                        round(float(row[6]) / WALKING_METERS_PER_MINUTE),
-                    ),
+                    "poi_id": place["id"],
+                    "estimated_time": place["tempo_min"],
                 },
             )
 
@@ -198,7 +269,7 @@ def create_place_search(
             "search_request_id": search_request_id,
             "location_id": location_id,
             "route_area": json.loads(route_area_geojson),
-            "results": format_places(rows),
+            "results": routed_places,
         }
     except Exception:
         db.rollback()

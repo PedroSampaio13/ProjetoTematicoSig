@@ -52,7 +52,7 @@
         body: JSON.stringify({
           origin: selectedLocation,
           destination: { lat: place.lat, lon: place.lon },
-          profile: 'driving',
+          profile: 'walking',
         }),
       });
 
