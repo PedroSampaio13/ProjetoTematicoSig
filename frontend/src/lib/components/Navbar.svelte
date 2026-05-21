@@ -5,8 +5,9 @@
   let { activeTab = 'mapa' }: { activeTab?: 'mapa' | 'farmacias' | 'restaurantes' } = $props();
 
   const tabs = [
-    { id: 'mapa',         label: 'Mapa',         href: '/' },
+    { id: 'inicio',         label: 'Página Inicial',         href: '/' },
     { id: 'farmacias',    label: 'Farmácias',    href: '/farmacias' },
+    { id: 'hospitais', label: 'Hospitais', href: '/hospitais' },
     { id: 'restaurantes', label: 'Restaurantes', href: '/restaurantes' },
   ] as const;
 
