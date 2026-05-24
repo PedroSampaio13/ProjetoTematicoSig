@@ -9,6 +9,7 @@
     { id: 'farmacias',    label: 'Farmácias',    href: '/farmacias' },
     { id: 'hospitais', label: 'Hospitais', href: '/hospitais' },
     { id: 'restaurantes', label: 'Restaurantes', href: '/restaurantes' },
+    { id: 'sobre', label: 'Sobre', href: '/sobre' }
   ] as const;
 
   let isDark = $derived($theme === 'dark');

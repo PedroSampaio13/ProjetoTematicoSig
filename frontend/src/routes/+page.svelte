@@ -2,7 +2,7 @@
   import Navbar from "$lib/components/Navbar.svelte";
   import MapComponent from "$lib/components/Map.svelte";
   import ProximidadeModal from "$lib/components/ProximidadeModal.svelte";
-  import { goto } from '$app/navigation';
+  import { goto } from "$app/navigation";
 
   interface Props {
     onSearch: (query: string, categories: Set<string>) => void;
@@ -79,13 +79,10 @@
       );
 
       places = results.flat();
-
       mapRef?.clearRouteArea();
       mapRef?.clearRoute();
-
       routeSummary = null;
       routeError = null;
-
       mapRef?.addMarkers(places);
     } finally {
       loading = false;
@@ -146,9 +143,7 @@
       };
     } catch {
       routeError = "Não foi possível calcular a rota.";
-
       routeSummary = null;
-
       mapRef?.clearRoute();
     }
   }
@@ -156,12 +151,9 @@
   // Seleção de localização
   function handleLocationSelect(location: { lat: number; lon: number }) {
     selectedLocation = location;
-
     mapRef?.clearRoute();
-
     routeSummary = null;
     routeError = null;
-
     proximityModalRef?.open();
   }
 
@@ -169,7 +161,6 @@
   function handleProximityResults(results: any[]) {
     places = results;
     searched = true;
-
     mapRef?.addMarkers(results);
   }
 
@@ -195,36 +186,9 @@
   }
 </script>
 
+@ -1,601 +1,266 @@
 <div class="hero-page-wrapper">
-  <Navbar activeTab="mapa" />
-
-  <!-- MAPA -->
-  <div class="map-background">
-    <MapComponent
-      bind:this={mapRef}
-      onLocationSelect={handleLocationSelect}
-      onPlaceSelect={calculateRoute}
-    />
-
-    <!-- Overlay escuro -->
-    <div class="map-overlay"></div>
-
-    <!-- Resumo rota -->
-    {#if routeSummary || routeError}
-      <div class="route-summary">
-        {#if routeSummary}
-          Rota:
-          {formatDistance(routeSummary.distance_m)}
-          ·
-          {routeSummary.duration_min}
-          min
-        {:else}
-          {routeError}
-        {/if}
-      </div>
-    {/if}
-  </div>
-
+  <Navbar activeTab="inicio" />
   <!-- HERO -->
   <section class="hero-container">
     <div class="hero-content">
@@ -281,36 +245,51 @@
         {/each}
       </div>
     </div>
-  </section>
 
-  <!-- MODAL -->
-  <ProximidadeModal
-    bind:this={proximityModalRef}
-    onResults={handleProximityResults}
-    onCenter={handleCenter}
-    onRouteArea={handleRouteArea}
-    {selectedLocation}
-  />
+    <div class="map-area">
+      <MapComponent
+        bind:this={mapRef}
+        onLocationSelect={handleLocationSelect}
+        onPlaceSelect={calculateRoute}
+      />
+      {#if routeSummary || routeError}
+        <div class="route-summary">
+          {#if routeSummary}
+            Rota: {formatDistance(routeSummary.distance_m)} · {routeSummary.duration_min}
+            min
+          {:else}
+            {routeError}
+          {/if}
+        </div>
+      {/if}
+      <ProximidadeModal
+        bind:this={proximityModalRef}
+        onResults={handleProximityResults}
+        onCenter={handleCenter}
+        onRouteArea={handleRouteArea}
+        {selectedLocation}
+      />
+    </div>
+  </section>
 </div>
 
 <style>
   :global(body) {
     margin: 0;
-    background: #020817;
+    background: var(--bg-primary);
     overflow: hidden;
     font-family:
+      "Inter",
       system-ui,
       -apple-system,
-      BlinkMacSystemFont,
-      "Segoe UI",
       sans-serif;
   }
 
   .hero-page-wrapper {
     position: relative;
-    min-height: 100vh;
+    height: 100vh;
     overflow: hidden;
-    background: #020817;
+    background: var(--bg-primary);
   }
 
   /* HERO */
@@ -318,53 +297,35 @@
     position: relative;
     z-index: 10;
     display: flex;
-    align-items: center;
-    min-height: calc(100vh - 70px);
-    padding: 0 60px;
+    height: 100%;
+    padding-left: 60px;
+    gap: 40px;
+    align-items: stretch;
   }
 
   .hero-content {
-    width: 100%;
+    width: 620px;
     max-width: 620px;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
+    justify-content: center;
     gap: 24px;
+    z-index: 20;
   }
 
-  /* MAPA */
-  .map-background {
-    position: absolute;
-    top: 70px;
-    right: 0;
-    width: 62%;
-    height: calc(100vh - 70px);
+  .map-area {
+    flex: 1;
+    min-width: 0;
+    position: relative;
     overflow: hidden;
-    border-top-left-radius: 28px;
-    border-bottom-left-radius: 28px;
-    z-index: 1;
   }
 
-  /* Leaflet */
-  .map-background :global(.leaflet-container) {
+  /* garante altura total ao mapa */
+  .map-area :global(.map-wrapper),
+  .map-area :global(.map) {
     width: 100%;
     height: 100%;
-    background: #0f172a;
-  }
-
-  /* Overlay */
-  .map-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      90deg,
-      rgba(2, 8, 23, 0.96) 0%,
-      rgba(2, 8, 23, 0.78) 16%,
-      rgba(2, 8, 23, 0.35) 34%,
-      rgba(2, 8, 23, 0.08) 52%,
-      transparent 72%
-    );
-    pointer-events: none;
-    z-index: 5;
   }
 
   /* Resumo rota */
@@ -373,14 +334,18 @@
     top: 20px;
     right: 20px;
     z-index: 30;
+
     padding: 10px 14px;
-    border-radius: 12px;
-    background: rgba(3, 9, 20, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: white;
+    border-radius: var(--radius-md);
+
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+
+    color: var(--text-primary);
     font-size: 13px;
     font-weight: 700;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+
+    box-shadow: var(--shadow-lg);
   }
 
   /* Badge */
@@ -388,12 +353,18 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+
     width: fit-content;
+
     padding: 7px 14px;
-    border-radius: 999px;
-    background: rgba(22, 168, 94, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: #16A85E;
+
+    border-radius: var(--radius-full);
+
+    background: var(--color-farmacia-10);
+    border: 1px solid var(--border);
+
+    color: var(--color-farmacia);
+
     font-size: 13px;
     font-weight: 500;
   }
@@ -401,31 +372,37 @@
   .dot {
     width: 8px;
     height: 8px;
-    border-radius: 50%;
-    background: #10b981;
+    border-radius: var(--radius-full);
+    background: var(--color-farmacia);
   }
 
   /* Título */
   .hero-title {
     margin: 0;
-    font-size: 72px;
+
+    font-family: "Sora", sans-serif;
+    font-size: 50px;
     line-height: 1.02;
     letter-spacing: -0.04em;
     font-weight: 800;
-    color: white;
+
+    color: var(--text-primary);
   }
 
   .highlight {
-    color: #10b981;
+    color: var(--color-farmacia);
   }
 
   /* Texto */
   .hero-subtitle {
     margin: 0;
+
+    max-width: 560px;
+
     font-size: 18px;
     line-height: 1.8;
-    color: #94a3b8;
-    max-width: 560px;
+
+    color: var(--text-secondary);
   }
 
   /* Botões */
@@ -438,58 +415,72 @@
   .btn-primary {
     height: 52px;
     padding: 0 28px;
+
     border: none;
-    border-radius: 12px;
-    background: #10b981;
-    color: #02120d;
+    border-radius: var(--radius-md);
+
+    background: var(--color-farmacia);
+    color: var(--text-inverse);
+
     font-size: 15px;
     font-weight: 700;
+
     cursor: pointer;
+
     transition:
-      transform 0.2s ease,
-      background 0.2s ease;
+      transform var(--transition),
+      background var(--transition);
   }
 
   .btn-primary:hover {
-    background: #059669;
     transform: translateY(-2px);
   }
 
   .btn-secondary {
     height: 52px;
     padding: 0 28px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
+
+    border-radius: var(--radius-md);
+
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+
+    color: var(--text-primary);
+
     font-size: 15px;
     font-weight: 600;
+
     cursor: pointer;
-    transition: background 0.2s ease;
+
+    transition: background var(--transition);
   }
 
   .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--bg-hover);
   }
 
   /* Estatísticas */
   .stats-container {
     display: flex;
+    flex-wrap: wrap;
     gap: 42px;
     margin-top: 20px;
-    flex-wrap: wrap;
   }
 
   .stat-card {
-    background: none;
+    background: transparent;
     border: none;
     padding: 0;
+
     display: flex;
     flex-direction: column;
     gap: 8px;
+
     text-align: left;
+
     cursor: pointer;
-    transition: transform 0.2s ease;
+
+    transition: transform var(--transition);
   }
 
   .stat-card:hover {
@@ -498,72 +489,67 @@
 
   .stat-badge {
     width: fit-content;
+
     padding: 5px 10px;
-    border-radius: 999px;
+
+    border-radius: var(--radius-full);
+
     font-size: 11px;
     font-weight: 700;
   }
 
   .badge-farmacia {
-    background: rgba(16, 185, 129, 0.12);
-    color: #10b981;
+    background: var(--color-farmacia-10);
+    color: var(--color-farmacia);
   }
 
   .badge-hospital {
-    background: rgba(59, 130, 246, 0.12);
-    color: #3b82f6;
+    background: var(--color-hospital-10);
+    color: var(--color-hospital);
   }
 
   .badge-restaurante {
-    background: rgba(245, 158, 11, 0.12);
-    color: #f59e0b;
+    background: var(--color-restaurante-10);
+    color: var(--color-restaurante);
   }
 
   .stat-number {
-    font-size: 52px;
+    font-size: 25px;
     line-height: 1;
     font-weight: 800;
-    color: white;
+    color: var(--text-primary);
   }
 
   .stat-label {
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.12em;
-    color: #64748b;
+    color: var(--text-muted);
   }
 
   /* RESPONSIVO */
-  @media (max-width: 1200px) {
-    .hero-title {
-      font-size: 58px;
-    }
-
-    .map-background {
-      width: 58%;
-    }
-  }
-
   @media (max-width: 1024px) {
     .hero-container {
+      flex-direction: column;
+      height: auto;
+      min-height: calc(100vh - 70px);
+
       padding: 40px 28px;
+    }
+
+    .hero-content {
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .map-area {
+      width: 100%;
+      height: 500px;
+      min-height: 500px;
     }
 
     .hero-title {
       font-size: 48px;
-    }
-
-    .map-background {
-      opacity: 0.45;
-      width: 100%;
-    }
-
-    .map-overlay {
-      background: linear-gradient(
-        180deg,
-        rgba(2, 8, 23, 0.82) 0%,
-        rgba(2, 8, 23, 0.92) 100%
-      );
     }
   }
 
@@ -590,12 +576,17 @@
 
     .cta-buttons {
       flex-direction: column;
-      align-items: flex-start;
+      align-items: stretch;
     }
 
     .btn-primary,
     .btn-secondary {
       width: 100%;
+    }
+
+    .map-area {
+      height: 420px;
+      min-height: 420px;
     }
   }
 </style>

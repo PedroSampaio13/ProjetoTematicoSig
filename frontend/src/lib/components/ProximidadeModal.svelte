@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fade, scale } from 'svelte/transition';
+  import { fade, scale } from "svelte/transition";
 
   type SelectedLocation = {
     lat: number;
@@ -19,15 +19,15 @@
   } = $props();
 
   let isOpen = $state(false);
-  let categoria = $state<'farmacia' | 'hospital' | 'restaurante'>('farmacia');
+  let categoria = $state<"farmacia" | "hospital" | "restaurante">("farmacia");
   let tempo = $state(15);
   let loading = $state(false);
   let error = $state<string | null>(null);
 
   const categorias = [
-    { id: 'farmacia',    label: 'Farmácia' },
-    { id: 'hospital',    label: 'Hospital' },
-    { id: 'restaurante', label: 'Restaurante' },
+    { id: "farmacia", label: "Farmácia" },
+    { id: "hospital", label: "Hospital" },
+    { id: "restaurante", label: "Restaurante" },
   ] as const;
 
   const tempos = [5, 15, 25] as const;
@@ -44,13 +44,13 @@
   }
 
   function handleBackdropClick(e: MouseEvent) {
-    if ((e.target as HTMLElement).classList.contains('modal-backdrop')) close();
+    if ((e.target as HTMLElement).classList.contains("modal-backdrop")) close();
   }
 
   async function runSearch(lat: number, lon: number) {
-    const res = await fetch('http://localhost:8000/places/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch("http://localhost:8000/places/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         lat,
         lon,
@@ -77,13 +77,13 @@
       try {
         await runSearch(selectedLocation.lat, selectedLocation.lon);
       } catch {
-        error = 'Erro ao carregar locais. Tente novamente.';
+        error = "Erro ao carregar locais. Tente novamente.";
         loading = false;
       }
       return;
     }
     if (!navigator.geolocation) {
-      error = 'Geolocalização não suportada neste browser.';
+      error = "Geolocalização não suportada neste browser.";
       loading = false;
       return;
     }
@@ -93,24 +93,40 @@
         try {
           await runSearch(pos.coords.latitude, pos.coords.longitude);
         } catch {
-          error = 'Erro ao carregar locais. Tente novamente.';
+          error = "Erro ao carregar locais. Tente novamente.";
           loading = false;
         }
       },
       () => {
-        error = 'Não foi possível obter a sua localização.';
+        error = "Não foi possível obter a sua localização.";
         loading = false;
       },
-      { timeout: 10000 }
+      { timeout: 10000 },
     );
   }
 </script>
 
 <!-- Botão fixo no canto inferior esquerdo do mapa -->
-<button class="proximity-fab" onclick={open} aria-label="Pesquisar perto de mim" title="Pesquisar perto de mim">
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-    <circle cx="12" cy="9" r="2.5"/>
+<button
+  class="proximity-fab"
+  onclick={open}
+  aria-label="Pesquisar perto de mim"
+  title="Pesquisar perto de mim"
+>
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <path
+      d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+    />
+    <circle cx="12" cy="9" r="2.5" />
   </svg>
 </button>
 
@@ -118,20 +134,50 @@
 {#if isOpen}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="modal-backdrop" onclick={handleBackdropClick} transition:fade={{ duration: 180 }}>
-    <div class="modal-content" transition:scale={{ duration: 200, start: 0.94 }}>
+  <div
+    class="modal-backdrop"
+    onclick={handleBackdropClick}
+    transition:fade={{ duration: 180 }}
+  >
+    <div
+      class="modal-content"
+      transition:scale={{ duration: 200, start: 0.94 }}
+    >
       <!-- Cabeçalho -->
       <div class="modal-header">
         <div class="modal-title-row">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="modal-icon">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="modal-icon"
+          >
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
           </svg>
           <h2 class="modal-title">Pesquisar perto de mim</h2>
         </div>
         <button class="modal-close" onclick={close} aria-label="Fechar">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" /><line
+              x1="6"
+              y1="6"
+              x2="18"
+              y2="18"
+            />
           </svg>
         </button>
       </div>
@@ -144,7 +190,7 @@
             <button
               class="chip cat-chip cat-{cat.id}"
               class:chip-active={categoria === cat.id}
-              onclick={() => categoria = cat.id}
+              onclick={() => (categoria = cat.id)}
             >
               {cat.label}
             </button>
@@ -160,7 +206,7 @@
             <button
               class="chip time-chip"
               class:chip-active={tempo === t}
-              onclick={() => tempo = t}
+              onclick={() => (tempo = t)}
             >
               {t} min
             </button>
@@ -180,16 +226,31 @@
       {/if}
 
       <!-- Botão principal -->
-      <button class="btn-location" onclick={handleLocalizacao} disabled={loading}>
+      <button
+        class="btn-location"
+        onclick={handleLocalizacao}
+        disabled={loading}
+      >
         {#if loading}
           <span class="spinner"></span>
           A obter localização…
         {:else}
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="3" />
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
           </svg>
-          {selectedLocation ? 'Pesquisar nesta localização' : 'Usar a minha localização'}
+          {selectedLocation
+            ? "Pesquisar nesta localização"
+            : "Usar a minha localização"}
         {/if}
       </button>
     </div>
@@ -201,8 +262,8 @@
   .proximity-fab {
     position: fixed;
     bottom: 24px;
-    left: calc(var(--sidebar-width) + 24px);
-    z-index: 50;
+    left: calc(var(--panel-width, 0px) + 24px);
+    z-index: 100;
     width: 44px;
     height: 44px;
     border-radius: var(--radius-md);
@@ -268,7 +329,7 @@
   }
 
   .modal-title {
-    font-family: 'Sora', sans-serif;
+    font-family: "Sora", sans-serif;
     font-size: 15px;
     font-weight: 700;
     color: var(--text-primary);
@@ -316,7 +377,7 @@
     border-radius: var(--radius-full);
     border: 1px solid var(--border);
     background: var(--bg-input);
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
     font-size: 13px;
     font-weight: 500;
     color: var(--text-secondary);
@@ -330,9 +391,21 @@
   }
 
   /* Chips de categoria — cor muda consoante o tipo activo */
-  .cat-chip.cat-farmacia.chip-active    { background: var(--color-farmacia-10);    color: var(--color-farmacia);    border-color: var(--color-farmacia); }
-  .cat-chip.cat-hospital.chip-active    { background: var(--color-hospital-10);    color: var(--color-hospital);    border-color: var(--color-hospital); }
-  .cat-chip.cat-restaurante.chip-active { background: var(--color-restaurante-10); color: var(--color-restaurante); border-color: var(--color-restaurante); }
+  .cat-chip.cat-farmacia.chip-active {
+    background: var(--color-farmacia-10);
+    color: var(--color-farmacia);
+    border-color: var(--color-farmacia);
+  }
+  .cat-chip.cat-hospital.chip-active {
+    background: var(--color-hospital-10);
+    color: var(--color-hospital);
+    border-color: var(--color-hospital);
+  }
+  .cat-chip.cat-restaurante.chip-active {
+    background: var(--color-restaurante-10);
+    color: var(--color-restaurante);
+    border-color: var(--color-restaurante);
+  }
 
   .time-chip.chip-active {
     background: var(--color-farmacia-10);
@@ -344,7 +417,7 @@
   /* ── Erro ── */
   .modal-error {
     font-size: 12.5px;
-    color: #EF4444;
+    color: #ef4444;
     background: rgba(239, 68, 68, 0.08);
     border: 1px solid rgba(239, 68, 68, 0.2);
     border-radius: var(--radius-md);
@@ -374,26 +447,35 @@
     color: white;
     border: none;
     border-radius: var(--radius-md);
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: opacity var(--transition);
   }
 
-  .btn-location:hover:not(:disabled) { opacity: 0.88; }
-  .btn-location:disabled { opacity: 0.55; cursor: not-allowed; }
+  .btn-location:hover:not(:disabled) {
+    opacity: 0.88;
+  }
+  .btn-location:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
 
   /* ── Animação de carregamento ── */
   .spinner {
     width: 15px;
     height: 15px;
-    border: 2px solid rgba(255,255,255,0.35);
+    border: 2px solid rgba(255, 255, 255, 0.35);
     border-top-color: white;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
     flex-shrink: 0;
   }
 
-  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 </style>

@@ -27,6 +27,7 @@ body {
   --color-farmacia:    #16A85E;
   --color-farmacia-10: #16A85E1A;
   --color-farmacia-20: #16A85E33;
+  --color-farmacia-40: #16a85e66;
   --color-hospital:    #2563EB;
   --color-hospital-10: #2563EB1A;
   --color-hospital-20: #2563EB33;
@@ -61,7 +62,8 @@ body {
 
   /* Layout */
   --navbar-height: 56px;
-  --sidebar-width: 300px;
+  --sidebar-width: 20%;
+  --index-width: 100%;
 
   /* Radius */
   --radius-sm: 6px;
@@ -73,6 +75,12 @@ body {
   /* Transitions */
   --transition: 0.2s ease;
   --transition-slow: 0.35s ease;
+
+  /* Map Gradient */
+  --map-100: #F0F4F8F5;
+  --map-80:  #F0F4F8C7;
+  --map-40:  #F0F4F859;
+  --map-10:  #F0F4F814;
 }
 
 /* ─── CSS Variables — Dark Mode ─────────────────────── */
@@ -81,6 +89,7 @@ body {
   --bg-primary:   #080D18;
   --bg-secondary: #0F172A;
   --bg-navbar:    #0B1220;
+  --bg-index:     #0D1526;
   --bg-sidebar:   #0D1526;
   --bg-input:     #1E293B;
   --bg-hover:     #1A2540;
@@ -101,6 +110,12 @@ body {
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.6);
   --shadow-popup: 0 20px 60px rgba(0, 0, 0, 0.7);
+
+  /* Map Gradient */
+  --map-100: #020817F5;
+  --map-80:  #020817C7;
+  --map-40:  #02081759;
+  --map-10:  #02081714;
 }
 
 /* ─── Scrollbar ─────────────────────────────────────── */

@@ -233,6 +233,11 @@
     z-index: 50;
   }
 
+  /* Expõe a variável para fora do componente */
+  :global(:root) {
+    --panel-width: var(--sidebar-width);
+  }
+
   .sidebar-section {
     padding: 16px 16px 14px;
   }
