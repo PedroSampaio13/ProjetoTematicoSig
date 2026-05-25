@@ -10,6 +10,8 @@
     categoria: Category;
     distancia_m?: number;
     tempo_min?: number;
+    estado: boolean;
+    24: boolean;
   };
 
   let {
@@ -26,26 +28,28 @@
     searched?: boolean;
   } = $props();
 
-  let searchQuery = $state('');
-  let activeCategories = $state<Set<Category>>(new Set(['farmacia', 'hospital', 'restaurante']));
+  let searchQuery = $state("");
+  let activeCategories = $state<Set<Category>>(
+    new Set(["farmacia", "hospital", "restaurante"]),
+  );
   let activeTime = $state<number>(15);
 
   const CATEGORIES = [
-    { id: 'farmacia' as Category,    label: 'Farmácias',    color: 'var(--color-farmacia)',    icon: '💊' },
-    { id: 'hospital' as Category,    label: 'Hospitais',    color: 'var(--color-hospital)',    icon: '🏥' },
-    { id: 'restaurante' as Category, label: 'Restaurantes', color: 'var(--color-restaurante)', icon: '🍽️' },
+    {id: "farmacia" as Category, label: "Farmácias", color: "var(--color-farmacia)", icon: "💊"},
+    {id: "hospital" as Category, label: "Hospitais", color: "var(--color-hospital)", icon: "🏥"},
+    {id: "restaurante" as Category, label: "Restaurantes", color: "var(--color-restaurante)", icon: "🍽️",},
   ];
 
   const CAT_COLORS: Record<Category, string> = {
-    farmacia:    'var(--color-farmacia)',
-    hospital:    'var(--color-hospital)',
-    restaurante: 'var(--color-restaurante)',
+    farmacia: "var(--color-farmacia)",
+    hospital: "var(--color-hospital)",
+    restaurante: "var(--color-restaurante)",
   };
 
   const CAT_LABELS: Record<Category, string> = {
-    farmacia:    'Farmácia',
-    hospital:    'Hospital',
-    restaurante: 'Restaurante',
+    farmacia: "Farmácia",
+    hospital: "Hospital",
+    restaurante: "Restaurante",
   };
 
   const TIMES = [5, 15, 25];
@@ -70,13 +74,13 @@
   }
 
   function clearSearch() {
-    searchQuery = '';
-    onSearch('', activeCategories);
+    searchQuery = "";
+    onSearch("", activeCategories);
   }
 
   function formatDistance(meters: number) {
     if (meters < 1000) return `${meters} m`;
-    return `${(meters / 1000).toFixed(1).replace('.', ',')} km`;
+    return `${(meters / 1000).toFixed(1).replace(".", ",")} km`;
   }
 </script>
 
@@ -85,8 +89,22 @@
   <div class="sidebar-section">
     <form class="search-wrapper" onsubmit={handleSearch}>
       <span class="search-icon">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" /><line
+            x1="21"
+            y1="21"
+            x2="16.65"
+            y2="16.65"
+          />
         </svg>
       </span>
       <input
@@ -97,9 +115,27 @@
         aria-label="Pesquisar local"
       />
       {#if searchQuery}
-        <button type="button" class="search-clear" onclick={clearSearch} aria-label="Limpar pesquisa">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        <button
+          type="button"
+          class="search-clear"
+          onclick={clearSearch}
+          aria-label="Limpar pesquisa"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" /><line
+              x1="6"
+              y1="6"
+              x2="18"
+              y2="18"
+            />
           </svg>
         </button>
       {/if}
@@ -166,15 +202,45 @@
       </div>
     {:else if !searched}
       <div class="results-empty">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.3">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          opacity="0.3"
+        >
+          <circle cx="11" cy="11" r="8" /><line
+            x1="21"
+            y1="21"
+            x2="16.65"
+            y2="16.65"
+          />
         </svg>
         <p>Usa a pesquisa ou clica no mapa</p>
       </div>
     {:else if places.length === 0}
       <div class="results-empty">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.3">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          opacity="0.3"
+        >
+          <circle cx="11" cy="11" r="8" /><line
+            x1="21"
+            y1="21"
+            x2="16.65"
+            y2="16.65"
+          />
         </svg>
         <p>Nenhum resultado encontrado</p>
       </div>
@@ -183,17 +249,22 @@
         {#each places as place}
           <li>
             <button class="result-item" onclick={() => onPlaceClick(place)}>
-              <span
-                class="result-dot"
-                style="background: {CAT_COLORS[place.categoria]}"
-              ></span>
-              <span class="result-info">
-                <span class="result-nome">{place.nome}</span>
-                {#if place.morada}
-                  <span class="result-morada">{place.morada}</span>
-                {/if}
+              <div class="result-info-dot">
+                <span
+                  class="result-dot"
+                  style="background: {CAT_COLORS[place.categoria]}"
+                ></span>
+                <span class="result-info">
+                  <span class="result-nome">{place.nome}</span>
+                  {#if place.morada}
+                    <span class="result-morada">{place.morada}</span>
+                  {/if}
+                </span>
+              </div>
+              <div class="result-bottom">
                 {#if place.distancia_m !== undefined || place.tempo_min !== undefined}
                   <span class="result-metrics">
+                    <span>📍</span>
                     {#if place.distancia_m !== undefined}
                       {formatDistance(place.distancia_m)}
                     {/if}
@@ -204,11 +275,13 @@
                       {place.tempo_min} min
                     {/if}
                   </span>
+                  {#if place.estado}
+                    <span class="result-estado-{place.estado}">
+                      {place.estado === true ? "Aberto" : "Fechado"}
+                    </span>
+                  {/if}
                 {/if}
-                <span class="result-cat" style="color: {CAT_COLORS[place.categoria]}">
-                  {CAT_LABELS[place.categoria]}
-                </span>
-              </span>
+              </div>
             </button>
           </li>
         {/each}
@@ -229,7 +302,9 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transition: background-color var(--transition-slow), border-color var(--transition-slow);
+    transition:
+      background-color var(--transition-slow),
+      border-color var(--transition-slow);
     z-index: 50;
   }
 
@@ -278,21 +353,27 @@
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
     font-size: 13.5px;
     color: var(--text-primary);
-    transition: border-color var(--transition), box-shadow var(--transition);
+    transition:
+      border-color var(--transition),
+      box-shadow var(--transition);
     outline: none;
   }
 
-  .search-input::placeholder { color: var(--text-muted); }
+  .search-input::placeholder {
+    color: var(--text-muted);
+  }
 
   .search-input:focus {
     border-color: var(--color-farmacia);
     box-shadow: 0 0 0 3px var(--color-farmacia-10);
   }
 
-  .search-input::-webkit-search-cancel-button { display: none; }
+  .search-input::-webkit-search-cancel-button {
+    display: none;
+  }
 
   .search-clear {
     position: absolute;
@@ -307,7 +388,9 @@
     transition: color var(--transition);
   }
 
-  .search-clear:hover { color: var(--text-primary); }
+  .search-clear:hover {
+    color: var(--text-primary);
+  }
 
   .category-chips {
     display: flex;
@@ -323,7 +406,7 @@
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
     font-size: 13px;
     font-weight: 500;
     color: var(--text-secondary);
@@ -368,7 +451,7 @@
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
     font-size: 12.5px;
     font-weight: 500;
     color: var(--text-secondary);
@@ -401,7 +484,9 @@
     margin-bottom: 12px;
   }
 
-  .results-header .section-label { margin-bottom: 0; }
+  .results-header .section-label {
+    margin-bottom: 0;
+  }
 
   .results-count {
     font-size: 12px;
@@ -436,7 +521,9 @@
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   /* Lista de resultados */
@@ -451,16 +538,25 @@
 
   .result-item {
     display: flex;
+    flex-direction: column;
     align-items: flex-start;
     gap: 10px;
     width: 100%;
-    padding: 10px 10px;
-    background: none;
+    padding: 10px 20px;
+    background: var(--bg-card);
     border: 1px solid transparent;
     border-radius: var(--radius-md);
     cursor: pointer;
     text-align: left;
-    transition: background var(--transition), border-color var(--transition);
+    transition:
+      background var(--transition),
+      border-color var(--transition);
+  }
+
+  .result-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .result-item:hover {
@@ -468,15 +564,31 @@
     border-color: var(--border);
   }
 
+  .result-item:focus {
+    background: var(--bg-input);
+    border-color: var(--bg-farmacia);
+    border-left: 5px;
+    border-style: solid;
+  }
+
+  .result-info-dot {
+    display: flex;
+    gap: 10px;
+    min-width: 0;
+  }
+  
   .result-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
+    justify-content: left;
+    width: 30px;
+    height: 30px;
+    border-radius: 20%;
     flex-shrink: 0;
     margin-top: 4px;
   }
 
   .result-info {
+    width: auto;
+    justify-content: right;
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -484,8 +596,8 @@
   }
 
   .result-nome {
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
+    font-family: "Inter", sans-serif;
+    font-size: 15px;
     font-weight: 600;
     color: var(--text-primary);
     white-space: nowrap;
@@ -501,16 +613,38 @@
     text-overflow: ellipsis;
   }
 
+  .result-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-top: 6px;
+    opacity: 0.9;
+  }
+
   .result-metrics {
     font-size: 11.5px;
     color: var(--text-primary);
     font-weight: 600;
   }
 
-  .result-cat {
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+  .result-estado-aberto,
+  .result-estado-Aberto {
+    display: flex;
+    color: var(--color-green);
+    padding: 0px 10px;
+    background-color: var(--bg-green-30);
+    border: 2px solid var(--color-green);
+    border-radius: 10px;
+  }
+
+  .result-estado-fechado,
+  .result-estado-Fechado {
+    display: flex;
+    color: var(--color-red);
+    background-color: var(--bg-red-30);
+    padding: 0px 10px;
+    border: 2px solid var(--color-red);
+    border-radius: 10px;
   }
 </style>

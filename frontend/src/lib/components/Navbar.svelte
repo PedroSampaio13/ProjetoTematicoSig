@@ -1,27 +1,38 @@
 <script lang="ts">
-  import { theme } from '$lib/stores/theme';
+  import { theme } from "$lib/stores/theme";
 
   // tab activa — definida pela página que usa este componente
-  let { activeTab = 'mapa' }: { activeTab?: 'mapa' | 'farmacias' | 'restaurantes' } = $props();
+  let {
+    activeTab = "inicio",
+  }: { activeTab?: "inicio" | "farmacias" | "hospitais" | "restaurantes" | "sobre"} = $props();
 
   const tabs = [
-    { id: 'inicio',         label: 'Página Inicial',         href: '/' },
-    { id: 'farmacias',    label: 'Farmácias',    href: '/farmacias' },
-    { id: 'hospitais', label: 'Hospitais', href: '/hospitais' },
-    { id: 'restaurantes', label: 'Restaurantes', href: '/restaurantes' },
-    { id: 'sobre', label: 'Sobre', href: '/sobre' }
+    { id: "inicio", label: "Página Inicial", href: "/" },
+    { id: "farmacias", label: "Farmácias", href: "/farmacias" },
+    { id: "hospitais", label: "Hospitais", href: "/hospitais" },
+    { id: "restaurantes", label: "Restaurantes", href: "/restaurantes" },
+    { id: "sobre", label: "Sobre", href: "/sobre" },
   ] as const;
 
-  let isDark = $derived($theme === 'dark');
+  let isDark = $derived($theme === "dark");
 </script>
 
 <header class="navbar">
   <!-- Logo -->
   <a href="/" class="navbar-logo" aria-label="MapSIG — início">
     <div class="logo-icon">
-      <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M11 2C7.13 2 4 5.13 4 9c0 5.25 7 11 7 11s7-5.75 7-11c0-3.87-3.13-7-7-7z" fill="currentColor"/>
-        <circle cx="11" cy="9" r="2.5" fill="white"/>
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 22 22"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M11 2C7.13 2 4 5.13 4 9c0 5.25 7 11 7 11s7-5.75 7-11c0-3.87-3.13-7-7-7z"
+          fill="currentColor"
+        />
+        <circle cx="11" cy="9" r="2.5" fill="white" />
       </svg>
     </div>
     <span class="logo-text">Map<strong>SIG</strong></span>
@@ -48,26 +59,44 @@
     <button
       class="theme-toggle"
       onclick={theme.toggle}
-      aria-label={isDark ? 'Ativar modo claro' : 'Ativar modo escuro'}
-      title={isDark ? 'Modo claro' : 'Modo escuro'}
+      aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
+      title={isDark ? "Modo claro" : "Modo escuro"}
     >
       {#if isDark}
         <!-- Ícone de sol (modo escuro activo) -->
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="5"/>
-          <line x1="12" y1="1" x2="12" y2="3"/>
-          <line x1="12" y1="21" x2="12" y2="23"/>
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-          <line x1="1" y1="12" x2="3" y2="12"/>
-          <line x1="21" y1="12" x2="23" y2="12"/>
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="12" cy="12" r="5" />
+          <line x1="12" y1="1" x2="12" y2="3" />
+          <line x1="12" y1="21" x2="12" y2="23" />
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+          <line x1="1" y1="12" x2="3" y2="12" />
+          <line x1="21" y1="12" x2="23" y2="12" />
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
         </svg>
       {:else}
         <!-- Ícone de lua (modo claro activo) -->
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
         </svg>
       {/if}
     </button>
@@ -89,7 +118,9 @@
     padding: 0 20px;
     gap: 24px;
     box-shadow: var(--shadow-sm);
-    transition: background-color var(--transition-slow), border-color var(--transition-slow);
+    transition:
+      background-color var(--transition-slow),
+      border-color var(--transition-slow);
   }
 
   /* Logo */
@@ -115,7 +146,7 @@
   }
 
   .logo-text {
-    font-family: 'Sora', sans-serif;
+    font-family: "Sora", sans-serif;
     font-size: 17px;
     font-weight: 500;
     letter-spacing: -0.3px;
@@ -139,13 +170,15 @@
     padding: 6px 14px;
     border: none;
     background: transparent;
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
     font-size: 13.5px;
     font-weight: 500;
     color: var(--text-secondary);
     border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: color var(--transition), background var(--transition);
+    transition:
+      color var(--transition),
+      background var(--transition);
     white-space: nowrap;
     text-decoration: none;
     display: inline-flex;

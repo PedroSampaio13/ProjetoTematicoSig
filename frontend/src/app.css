@@ -35,6 +35,15 @@ body {
   --color-restaurante-10: #D977061A;
   --color-restaurante-20: #D9770633;
 
+  --color-green: #22c97c;
+  --color-red: #f87171;
+  --color-blue: #3B82F6;
+
+  --color-green-30: #22c97c4d;
+  --color-red-30: #f871714d;
+  --color-blue-30: #3b82f64d;
+
+
   /* Backgrounds */
   --bg-primary:   #F0F4F8;
   --bg-secondary: #FFFFFF;
@@ -85,6 +94,10 @@ body {
 
 /* ─── CSS Variables — Dark Mode ─────────────────────── */
 [data-theme="dark"] {
+  --color-green: #22c97c;
+  --color-red: #f87171;
+  --color-blue: #3B82F6;
+
   /* Backgrounds */
   --bg-primary:   #080D18;
   --bg-secondary: #0F172A;
@@ -94,6 +107,11 @@ body {
   --bg-input:     #1E293B;
   --bg-hover:     #1A2540;
   --bg-chip:      #162033;
+  --bg-card:      #161E35;
+
+  --bg-green-30: #22c97c4d;
+  --bg-red-30: #f871714d;
+  --bg-blue-30: #3b82f64d;
 
   /* Borders */
   --border:       #1E293B;
