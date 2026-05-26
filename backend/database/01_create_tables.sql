@@ -1,4 +1,15 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
+CREATE EXTENSION IF NOT EXISTS unaccent;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+CREATE OR REPLACE FUNCTION immutable_unaccent(value TEXT)
+RETURNS TEXT
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+AS $$
+    SELECT unaccent('unaccent', value)
+$$;
 
 CREATE TABLE IF NOT EXISTS category (
     id BIGSERIAL PRIMARY KEY,
@@ -79,11 +90,18 @@ ON location USING GIST (geometry);
 CREATE INDEX IF NOT EXISTS idx_poi_geometry
 ON point_of_interest USING GIST (geometry);
 
+CREATE INDEX IF NOT EXISTS idx_poi_geometry_geography
+ON point_of_interest USING GIST ((geometry::geography));
+
 CREATE INDEX IF NOT EXISTS idx_route_area_geometry
 ON route_area USING GIST (geometry);
 
 CREATE INDEX IF NOT EXISTS idx_poi_category
 ON point_of_interest (category_id);
+
+CREATE INDEX IF NOT EXISTS idx_poi_name_unaccent_trgm
+ON point_of_interest
+USING GIN (lower(immutable_unaccent(name)) gin_trgm_ops);
 
 CREATE INDEX IF NOT EXISTS idx_search_location
 ON search_request (location_id);

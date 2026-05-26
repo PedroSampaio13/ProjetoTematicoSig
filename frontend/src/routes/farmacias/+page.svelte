@@ -12,7 +12,7 @@
   let loading = $state(false);
   let searched = $state(false);
   let selectedLocation = $state<{ lat: number; lon: number } | null>(null);
-  let routeSummary = $state<{ distance_m: number; duration_min: number } | null>(null);
+  let routeSummary = $state<{ distance_m: number; duration_min: number; estimated?: boolean } | null>(null);
   let routeError = $state<string | null>(null);
 
   async function fetchPlaces(query: string, categories: Set<string>) {
@@ -67,6 +67,7 @@
       routeSummary = {
         distance_m: route.distance_m,
         duration_min: route.duration_min,
+        estimated: route.estimated,
       };
     } catch {
       routeError = 'Nao foi possivel calcular a rota.';
@@ -126,7 +127,7 @@
       {#if routeSummary || routeError}
         <div class="route-summary">
           {#if routeSummary}
-            Rota: {formatDistance(routeSummary.distance_m)} · {routeSummary.duration_min} min
+            Rota{routeSummary.estimated ? ' estimada' : ''}: {formatDistance(routeSummary.distance_m)} · {routeSummary.duration_min} min
           {:else}
             {routeError}
           {/if}
