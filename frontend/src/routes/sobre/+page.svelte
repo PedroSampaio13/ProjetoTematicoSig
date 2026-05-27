@@ -1,14 +1,23 @@
 <script>
     import Navbar from "$lib/components/Navbar.svelte";
 
-    // Lista com os nomes dos criadores do projeto
-    let criadores = [
-        { nome: "Pedro Sampaio", numero: "119213" },
-        { nome: "Ana Beatriz Vicente", numero: "114509" },
-        { nome: "Tiago da Silva Coelho", numero: "109185" },
-        { nome: "Guyvania Rosa", numero: "101515" },
-        { nome: "Diogo Lemos", numero: "121286" },
-        { nome: "Sara Presa", numero: "121354" },
+    // Lista com os nomes dos desenvolvedores do projeto
+    let desenvolvedores = [
+        { nome: "Pedro Sampaio", numero: "119213", img: "/images/pedro.jpg" },
+        { nome: "Ana Beatriz Vicente", numero: "114509", img: "/images/ana.jpg" },
+        { nome: "Tiago da Silva Coelho", numero: "109185", img: "/images/tiago.jpg" },
+        { nome: "Guyvania Rosa", numero: "101515", img: "/images/guyvania.jpg" },
+        { nome: "Diogo Lemos", numero: "121286", img: "/images/diogo.jpg" },
+        { nome: "Sara Presa", numero: "121354", img: "/images/sara.jpg" },
+    ];
+
+    let faqs = [
+        { pergunta: "Como funciona a pesquisa no mapa?",
+            resposta: "Permite encontrar farmácias, hospitais e restaurantes próximos e visualizá-los no mapa."},
+        { pergunta: "Posso usar no telemóvel?",
+            resposta: "Sim, a aplicação é responsiva e funciona em qualquer dispositivo." },
+        { pergunta: "Preciso de conta?",
+            resposta: "Não, a utilização é livre e não requer registo."}
     ];
 </script>
 
@@ -44,15 +53,28 @@
     </section>
 
     <section class="about-section bg-secondary shadow-md">
-        <h2 class="font-sora text-restaurante">Criadores</h2>
+        <h2 class="font-sora text-restaurante">Desenvolvedores</h2>
         <div class="creators-grid">
-            {#each criadores as criador}
+            {#each desenvolvedores as d}
                 <div class="creator-card bg-input">
-                    <h3 class="font-sora">{criador.nome}</h3>
-                    <p class="text-secondary">Número: {criador.numero}</p>
+                    <img src={d.img} alt={d.nome} class="creator-img" />
+                    <div>
+                        <h3 class="font-sora">{d.nome}</h3>
+                        <p class="text-secondary">Número: {d.numero}</p>
+                    </div>
                 </div>
             {/each}
         </div>
+    </section>
+
+    <section class="about-section bg-secondary shadow-md">
+        <h2 class="font-sora">Perguntas Frequentes</h2>
+        {#each faqs as faq}
+            <div class="faq-item">
+                <h3>{faq.pergunta}</h3>
+                <p>{faq.resposta}</p>
+            </div>
+        {/each}
     </section>
 </div>
 
@@ -62,6 +84,7 @@
         max-width: 800px;
         margin: 0 auto;
         margin-top: var(--navbar-height);
+        margin-bottom: var(--navbar-height);
         height: 100%;
         overflow-y: auto;
         box-sizing: border-box;
@@ -81,6 +104,7 @@
 
     /* Estilização geral das secções */
     .about-section {
+        margin: 50px 0;
         padding: 30px;
         border-radius: var(--radius-lg);
         border: 1px solid var(--border);
@@ -133,15 +157,21 @@
         box-shadow: var(--shadow-md);
     }
 
-    /* Grelha para a apresentação dos criadores */
+    /* Grelha para a apresentação dos desenvolvedores */
     .creators-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
         gap: 16px;
         margin-top: 20px;
+        align-items: center;
+        gap: 12px;
+
     }
 
     .creator-card {
+        display: flex;
+        align-items: center;
+        gap: 15px;
         padding: 20px;
         border-radius: var(--radius-md);
         border: 1px solid var(--border);
@@ -161,5 +191,26 @@
     .creator-card p {
         font-size: 0.85rem;
         margin: 0;
+    }
+    
+    .creator-card div {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .creator-img {
+        width: 60px;
+        height: 60px;
+        border-radius: 10%;
+        object-fit: cover;
+        border: 2px solid var(--border);
+    }
+
+    .faq-item {
+        padding: 15px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border);
+        background-color: var(--bg-input);
+        margin-bottom: 10px;
     }
 </style>
