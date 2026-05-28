@@ -8,6 +8,7 @@
   let places = $state<any[]>([]);
   let loading = $state(false);
   let searched = $state(false);
+  let selectedPoint = $state<{ lat: number; lon: number } | null>(null);
   let selectedLocation = $state<{ lat: number; lon: number } | null>(null);
   let routeSummary = $state<{ distance_m: number; duration_min: number; estimated?: boolean } | null>(null);
   let routeError = $state<string | null>(null);
@@ -25,8 +26,6 @@
         })
       );
       places = results.flat();
-      mapRef?.clearRouteArea();
-      mapRef?.clearRoute();
       routeSummary = null;
       routeError = null;
       mapRef?.addMarkers(places);
@@ -55,8 +54,6 @@
         })
       );
       places = results.flat();
-      mapRef?.clearRoute();
-      mapRef?.clearRouteArea();
       routeSummary = null;
       routeError = null;
       mapRef?.addMarkers(places);
@@ -101,6 +98,7 @@
   }
 
   function handleLocationSelect(location: { lat: number; lon: number }) {
+    selectedPoint = location;
     selectedLocation = location;
     mapRef?.clearRoute();
     routeSummary = null;
@@ -117,7 +115,7 @@
   <Navbar activeTab="hospitais" />
 
   <div class="app-body">
-    <Sidebar onSearch={handleSearch} onTimeSearch={handleTimeSearch} {places} {loading} {searched} {onPlaceClick} />
+    <Sidebar onSearch={handleSearch} onTimeSearch={handleTimeSearch} selectedPoint={selectedPoint} {places} {loading} {searched} {onPlaceClick} />
     <main class="map-area">
       <MapComponent
         bind:this={mapRef}
