@@ -14,21 +14,28 @@
     24: boolean;
   };
 
-  let {
-    onSearch = (_q: string, _c: Set<Category>) => {},
-    onTimeSearch = (_lat: number, _lon: number, _radius_m: number, _c: Set<Category>) => {},
-    onPlaceClick = (_p: Place) => {},
-    places = [] as Place[],
-    loading = false,
-    searched = false,
-  }: {
-    onSearch?: (query: string, categories: Set<Category>) => void;
-    onTimeSearch?: (lat: number, lon: number, radius_m: number, categories: Set<Category>) => void;
-    onPlaceClick?: (place: Place) => void;
-    places?: Place[];
-    loading?: boolean;
-    searched?: boolean;
-  } = $props();
+  type SelectedPoint = {
+  lat: number;
+  lon: number;
+} | null;
+
+let {
+  onSearch = (_q: string, _c: Set<Category>) => {},
+  onTimeSearch = (_lat: number, _lon: number, _radius_m: number, _c: Set<Category>) => {},
+  onPlaceClick = (_p: Place) => {},
+  selectedPoint = null as SelectedPoint,
+  places = [] as Place[],
+  loading = false,
+  searched = false,
+}: {
+  onSearch?: (query: string, categories: Set<Category>) => void;
+  onTimeSearch?: (lat: number, lon: number, radius_m: number, categories: Set<Category>) => void;
+  onPlaceClick?: (place: Place) => void;
+  selectedPoint?: SelectedPoint;
+  places?: Place[];
+  loading?: boolean;
+  searched?: boolean;
+} = $props();
 
   let searchQuery = $state("");
   let activeCategories = $state<Set<Category>>(
@@ -70,24 +77,21 @@
   }
 
   function handleTimeClick(t: number) {
-    activeTime = t;
-    geoError = null;
-    if (!navigator.geolocation) {
-      geoError = 'Geolocalização não suportada neste browser.';
-      return;
-    }
-    geoLoading = t;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        geoLoading = null;
-        onTimeSearch(pos.coords.latitude, pos.coords.longitude, TIME_RADII[t], activeCategories);
-      },
-      () => {
-        geoLoading = null;
-        geoError = 'Acesso à localização recusado.';
-      }
-    );
+  activeTime = t;
+  geoError = null;
+
+  if (!selectedPoint) {
+    geoError = 'Clica primeiro num ponto no mapa para pesquisares nessa zona.';
+    return;
   }
+
+  onTimeSearch(
+    selectedPoint.lat,
+    selectedPoint.lon,
+    TIME_RADII[t],
+    activeCategories
+  );
+}
 
   function handleSearch(e: Event) {
     e.preventDefault();
