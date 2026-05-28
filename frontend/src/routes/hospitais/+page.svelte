@@ -3,10 +3,7 @@
   import Navbar from '$lib/components/Navbar.svelte';
   import Sidebar from '$lib/components/Sidebar.svelte';
   import MapComponent from '$lib/components/Map.svelte';
-  import ProximidadeModal from '$lib/components/ProximidadeModal.svelte';
-
   let mapRef: MapComponent;
-  let proximityModalRef: ProximidadeModal;
 
   let places = $state<any[]>([]);
   let loading = $state(false);
@@ -46,6 +43,28 @@
     fetchPlaces(query, categories);
   }
 
+  async function handleTimeSearch(lat: number, lon: number, radius_m: number, categories: Set<string>) {
+    loading = true;
+    searched = true;
+    try {
+      const activeCats = [...categories];
+      const results = await Promise.all(
+        activeCats.map((cat) => {
+          const params = new URLSearchParams({ lat: String(lat), lon: String(lon), radius_m: String(radius_m), categoria: cat });
+          return fetch(`http://localhost:8000/places/nearby?${params}`).then((r) => r.json());
+        })
+      );
+      places = results.flat();
+      mapRef?.clearRoute();
+      mapRef?.clearRouteArea();
+      routeSummary = null;
+      routeError = null;
+      mapRef?.addMarkers(places);
+    } finally {
+      loading = false;
+    }
+  }
+
   async function calculateRoute(place: any) {
     if (!selectedLocation) return;
 
@@ -81,30 +100,11 @@
     calculateRoute(place);
   }
 
-  function handleProximityResults(results: any[]) {
-    places = results;
-    searched = true;
-    mapRef?.addMarkers(results);
-  }
-
-  function handleCenter(lat: number, lon: number) {
-    mapRef?.centerMap(lat, lon, 14);
-  }
-
-  function handleRouteArea(routeArea: object | null) {
-    if (routeArea) {
-      mapRef?.drawRouteArea(routeArea);
-    } else {
-      mapRef?.clearRouteArea();
-    }
-  }
-
   function handleLocationSelect(location: { lat: number; lon: number }) {
     selectedLocation = location;
     mapRef?.clearRoute();
     routeSummary = null;
     routeError = null;
-    proximityModalRef?.open();
   }
 
   function formatDistance(meters: number) {
@@ -117,7 +117,7 @@
   <Navbar activeTab="hospitais" />
 
   <div class="app-body">
-    <Sidebar onSearch={handleSearch} {places} {loading} {searched} {onPlaceClick} />
+    <Sidebar onSearch={handleSearch} onTimeSearch={handleTimeSearch} {places} {loading} {searched} {onPlaceClick} />
     <main class="map-area">
       <MapComponent
         bind:this={mapRef}
@@ -133,13 +133,6 @@
           {/if}
         </div>
       {/if}
-      <ProximidadeModal
-        bind:this={proximityModalRef}
-        onResults={handleProximityResults}
-        onCenter={handleCenter}
-        onRouteArea={handleRouteArea}
-        {selectedLocation}
-      />
     </main>
   </div>
 </div>

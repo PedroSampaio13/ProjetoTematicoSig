@@ -10,7 +10,6 @@
   import VectorSource from 'ol/source/Vector';
   import Feature from 'ol/Feature';
   import Point from 'ol/geom/Point';
-  import GeoJSON from 'ol/format/GeoJSON';
   import { fromLonLat, toLonLat } from 'ol/proj';
   import { Style, Circle, Fill, Stroke, Text } from 'ol/style';
   import Overlay from 'ol/Overlay';
@@ -64,8 +63,6 @@
   let map: OlMap;
   let tileLayer: TileLayer<XYZ>;
   let vectorSource = new VectorSource();
-  let routeAreaSource = new VectorSource();
-  let routeSource = new VectorSource();
   let selectedLocationSource = new VectorSource();
   let popup: Overlay;
 
@@ -90,21 +87,6 @@
       source: vectorSource,
     });
 
-    const routeAreaLayer = new VectorLayer({
-      source: routeAreaSource,
-      style: new Style({
-        fill: new Fill({ color: 'rgba(22, 168, 94, 0.16)' }),
-        stroke: new Stroke({ color: 'rgba(22, 168, 94, 0.72)', width: 2 }),
-      }),
-    });
-
-    const routeLayer = new VectorLayer({
-      source: routeSource,
-      style: new Style({
-        stroke: new Stroke({ color: '#F59E0B', width: 5 }),
-      }),
-    });
-
     const selectedLocationLayer = new VectorLayer({
       source: selectedLocationSource,
     });
@@ -118,7 +100,7 @@
 
     map = new OlMap({
       target: mapContainer,
-      layers: [tileLayer, routeAreaLayer, routeLayer, vectorLayer, selectedLocationLayer],
+      layers: [tileLayer, vectorLayer, selectedLocationLayer],
       overlays: [popup],
       view: new View({
         center: fromLonLat([-8.2, 39.5]),
@@ -183,7 +165,6 @@
     tileLayer.setSource(new XYZ({ url: TILES[$theme] }));
   });
 
-  // Expor função para adicionar marcadores
   export function addMarkers(places: Array<{
     id: string | number;
     nome: string;
@@ -223,42 +204,6 @@
     vectorSource.clear();
     popupData = null;
     popup?.setPosition(undefined);
-  }
-
-  export function drawRouteArea(routeArea: object) {
-    routeAreaSource.clear();
-
-    const features = new GeoJSON().readFeatures(routeArea, {
-      dataProjection: 'EPSG:4326',
-      featureProjection: 'EPSG:3857',
-    });
-
-    for (const feature of features) {
-      feature.set('kind', 'route-area');
-      routeAreaSource.addFeature(feature);
-    }
-  }
-
-  export function clearRouteArea() {
-    routeAreaSource.clear();
-  }
-
-  export function drawRoute(routeGeometry: object) {
-    routeSource.clear();
-
-    const features = new GeoJSON().readFeatures(routeGeometry, {
-      dataProjection: 'EPSG:4326',
-      featureProjection: 'EPSG:3857',
-    });
-
-    for (const feature of features) {
-      feature.set('kind', 'route');
-      routeSource.addFeature(feature);
-    }
-  }
-
-  export function clearRoute() {
-    routeSource.clear();
   }
 
   export function setSelectedLocation(lat: number, lon: number) {
@@ -381,17 +326,6 @@
             </svg>
             Ver no mapa
           </button>
-          <a
-            href="https://www.google.com/maps/dir/?api=1&destination={popupData.lat},{popupData.lon}&travelmode=walking"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="popup-btn popup-btn-directions"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="3 11 22 2 13 21 11 13 3 11"/>
-            </svg>
-            Como chegar
-          </a>
         </div>
       </div>
     {/if}
@@ -544,17 +478,7 @@
     border-color: var(--text-muted);
   }
 
-  .popup-btn-directions {
-    background: var(--color-farmacia);
-    color: white;
-    border-color: var(--color-farmacia);
-  }
-
-  .popup-btn-directions:hover {
-    opacity: 0.88;
-  }
-
-  /* Override estilos do OpenLayers para combinar com o tema */
+  /* Estilos do OpenLayers ajustados para o tema */
   :global(.ol-attribution) { display: none !important; }
   :global(.ol-zoom) {
     bottom: 24px !important;

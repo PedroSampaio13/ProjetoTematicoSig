@@ -1,194 +1,64 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import Navbar from "$lib/components/Navbar.svelte";
   import MapComponent from "$lib/components/Map.svelte";
-  import ProximidadeModal from "$lib/components/ProximidadeModal.svelte";
   import { goto } from "$app/navigation";
 
-  interface Props {
-    onSearch: (query: string, categories: Set<string>) => void;
-  }
-
-  let { onSearch }: Props = $props();
-
-  let mapRef: MapComponent;
-  let proximityModalRef: ProximidadeModal;
-
-  let places = $state<any[]>([]);
-  let loading = $state(false);
-  let searched = $state(false);
-
-  let selectedLocation = $state<{
-    lat: number;
-    lon: number;
-  } | null>(null);
-
-  let routeSummary = $state<{
-    distance_m: number;
-    duration_min: number;
-    estimated?: boolean;
-  } | null>(null);
-
-  let routeError = $state<string | null>(null);
-
-  // Estatísticas
   const stats = [
     {
       label: "FARMÁCIAS",
-      count: "2.8k+",
-      icon: "💊",
+      countKey: "farmacia",
+      apiCat: "farmacia",
+      icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M19 11h-6V5a1 1 0 0 0-2 0v6H5a1 1 0 0 0 0 2h6v6a1 1 0 0 0 2 0v-6h6a1 1 0 0 0 0-2z"/></svg>`,
       category: "farmacias",
       colorClass: "badge-farmacia",
     },
     {
       label: "HOSPITAIS",
-      count: "120+",
-      icon: "🏥",
+      countKey: "hospital",
+      apiCat: "hospital",
+      icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="4" width="20" height="18" rx="2"/><line x1="12" y1="9" x2="12" y2="15"/><line x1="9" y1="12" x2="15" y2="12"/></svg>`,
       category: "hospitais",
       colorClass: "badge-hospital",
     },
     {
       label: "RESTAURANTES",
-      count: "45k+",
-      icon: "🍽️",
+      countKey: "restaurante",
+      apiCat: "restaurante",
+      icon: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="21" y1="15" x2="21" y2="22"/><path d="M21 2a5 5 0 0 0-5 5v6h5"/></svg>`,
       category: "restaurantes",
       colorClass: "badge-restaurante",
     },
   ];
 
-  // Buscar locais
-  async function fetchPlaces(query: string, categories: Set<string>) {
-    loading = true;
-    searched = true;
+  let counts = $state<Record<string, string>>({
+    farmacia: "...",
+    hospital: "...",
+    restaurante: "...",
+  });
 
+  onMount(async () => {
     try {
-      const activeCats = [...categories];
-
-      const results = await Promise.all(
-        activeCats.map((cat) => {
-          const params = new URLSearchParams({
-            categoria: cat,
-          });
-
-          if (query) {
-            params.set("query", query);
-          }
-
-          return fetch(`http://localhost:8000/places/?${params}`).then((r) =>
-            r.json(),
-          );
-        }),
-      );
-
-      places = results.flat();
-      mapRef?.clearRouteArea();
-      mapRef?.clearRoute();
-      routeSummary = null;
-      routeError = null;
-      mapRef?.addMarkers(places);
-    } finally {
-      loading = false;
+      const [farmacias, hospitais, restaurantes] = await Promise.all([
+        fetch("http://localhost:8000/places/?categoria=farmacia").then((r) => r.json()),
+        fetch("http://localhost:8000/places/?categoria=hospital").then((r) => r.json()),
+        fetch("http://localhost:8000/places/?categoria=restaurante").then((r) => r.json()),
+      ]);
+      counts.farmacia = String(farmacias.length);
+      counts.hospital = String(hospitais.length);
+      counts.restaurante = String(restaurantes.length);
+    } catch {
+      counts.farmacia = "—";
+      counts.hospital = "—";
+      counts.restaurante = "—";
     }
-  }
+  });
 
-  // Pesquisa principal
-  function handleSearch(query: string, categories: Set<string>) {
-    onSearch(query, categories);
-    fetchPlaces(query, categories);
-  }
-
-  // Botões rápidos
   function handleQuickSearch(category: string) {
     goto(`/${category}`);
   }
-
-  // Botão principal
-  function handleMainSearch() {
-    const allCategories = new Set(["farmacias", "hospitais", "restaurantes"]);
-
-    handleSearch("", allCategories);
-  }
-
-  // Rotas
-  async function calculateRoute(place: any) {
-    if (!selectedLocation) return;
-
-    routeError = null;
-
-    try {
-      const res = await fetch("http://localhost:8000/routes/calculate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          origin: selectedLocation,
-          destination: {
-            lat: place.lat,
-            lon: place.lon,
-          },
-          profile: "walking",
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error();
-      }
-
-      const route = await res.json();
-
-      mapRef?.drawRoute(route.geometry);
-
-      routeSummary = {
-        distance_m: route.distance_m,
-        duration_min: route.duration_min,
-        estimated: route.estimated,
-      };
-    } catch {
-      routeError = "Não foi possível calcular a rota.";
-      routeSummary = null;
-      mapRef?.clearRoute();
-    }
-  }
-
-  // Seleção de localização
-  function handleLocationSelect(location: { lat: number; lon: number }) {
-    selectedLocation = location;
-    mapRef?.clearRoute();
-    routeSummary = null;
-    routeError = null;
-    proximityModalRef?.open();
-  }
-
-  // Modal proximidade
-  function handleProximityResults(results: any[]) {
-    places = results;
-    searched = true;
-    mapRef?.addMarkers(results);
-  }
-
-  function handleCenter(lat: number, lon: number) {
-    mapRef?.centerMap(lat, lon, 14);
-  }
-
-  function handleRouteArea(routeArea: object | null) {
-    if (routeArea) {
-      mapRef?.drawRouteArea(routeArea);
-    } else {
-      mapRef?.clearRouteArea();
-    }
-  }
-
-  // Distância
-  function formatDistance(meters: number) {
-    if (meters < 1000) {
-      return `${meters} m`;
-    }
-
-    return `${(meters / 1000).toFixed(1).replace(".", ",")} km`;
-  }
 </script>
 
-@ -1,601 +1,266 @@
 <div class="hero-page-wrapper">
   <Navbar activeTab="inicio" />
   <!-- HERO -->
@@ -214,13 +84,11 @@
         Filtra por proximidade, horário e categoria num mapa interativo.
       </p>
 
-      <!-- Botões -->
+      <!-- Botão -->
       <div class="cta-buttons">
-        <button class="btn-primary" onclick={handleMainSearch}>
+        <button class="btn-primary" onclick={() => goto('/farmacias')}>
           Começar a Pesquisar
         </button>
-
-        <button class="btn-secondary"> Ver Demonstração </button>
       </div>
 
       <!-- Estatísticas -->
@@ -231,46 +99,18 @@
             onclick={() => handleQuickSearch(stat.category)}
           >
             <span class="stat-badge {stat.colorClass}">
-              {stat.icon}
-
+              {@html stat.icon}
               {stat.label.charAt(0) + stat.label.slice(1).toLowerCase()}
             </span>
-
-            <span class="stat-number">
-              {stat.count}
-            </span>
-
-            <span class="stat-label">
-              {stat.label}
-            </span>
+            <span class="stat-number">{counts[stat.countKey]}</span>
+            <span class="stat-label">{stat.label}</span>
           </button>
         {/each}
       </div>
     </div>
 
     <div class="map-area">
-      <MapComponent
-        bind:this={mapRef}
-        onLocationSelect={handleLocationSelect}
-        onPlaceSelect={calculateRoute}
-      />
-      {#if routeSummary || routeError}
-        <div class="route-summary">
-          {#if routeSummary}
-            Rota{routeSummary.estimated ? " estimada" : ""}: {formatDistance(routeSummary.distance_m)} · {routeSummary.duration_min}
-            min
-          {:else}
-            {routeError}
-          {/if}
-        </div>
-      {/if}
-      <ProximidadeModal
-        bind:this={proximityModalRef}
-        onResults={handleProximityResults}
-        onCenter={handleCenter}
-        onRouteArea={handleRouteArea}
-        {selectedLocation}
-      />
+      <MapComponent />
     </div>
   </section>
 </div>
@@ -330,43 +170,17 @@
     height: 100%;
   }
 
-  /* Resumo rota */
-  .route-summary {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    z-index: 30;
-
-    padding: 10px 14px;
-    border-radius: var(--radius-md);
-
-    background: var(--bg-primary);
-    border: 1px solid var(--border);
-
-    color: var(--text-primary);
-    font-size: 13px;
-    font-weight: 700;
-
-    box-shadow: var(--shadow-lg);
-  }
-
   /* Badge */
   .location-badge {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-
     width: fit-content;
-
     padding: 7px 14px;
-
     border-radius: var(--radius-full);
-
     background: var(--color-farmacia-10);
     border: 1px solid var(--border);
-
     color: var(--color-farmacia);
-
     font-size: 13px;
     font-weight: 500;
   }
@@ -381,13 +195,11 @@
   /* Título */
   .hero-title {
     margin: 0;
-
     font-family: "Sora", sans-serif;
     font-size: 50px;
     line-height: 1.02;
     letter-spacing: -0.04em;
     font-weight: 800;
-
     color: var(--text-primary);
   }
 
@@ -398,12 +210,9 @@
   /* Texto */
   .hero-subtitle {
     margin: 0;
-
     max-width: 560px;
-
     font-size: 18px;
     line-height: 1.8;
-
     color: var(--text-secondary);
   }
 
@@ -417,18 +226,13 @@
   .btn-primary {
     height: 52px;
     padding: 0 28px;
-
     border: none;
     border-radius: var(--radius-md);
-
     background: var(--color-farmacia);
     color: var(--text-inverse);
-
     font-size: 15px;
     font-weight: 700;
-
     cursor: pointer;
-
     transition:
       transform var(--transition),
       background var(--transition);
@@ -436,29 +240,6 @@
 
   .btn-primary:hover {
     transform: translateY(-2px);
-  }
-
-  .btn-secondary {
-    height: 52px;
-    padding: 0 28px;
-
-    border-radius: var(--radius-md);
-
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-
-    color: var(--text-primary);
-
-    font-size: 15px;
-    font-weight: 600;
-
-    cursor: pointer;
-
-    transition: background var(--transition);
-  }
-
-  .btn-secondary:hover {
-    background: var(--bg-hover);
   }
 
   /* Estatísticas */
@@ -473,15 +254,11 @@
     background: transparent;
     border: none;
     padding: 0;
-
     display: flex;
     flex-direction: column;
     gap: 8px;
-
     text-align: left;
-
     cursor: pointer;
-
     transition: transform var(--transition);
   }
 
@@ -490,12 +267,12 @@
   }
 
   .stat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     width: fit-content;
-
     padding: 5px 10px;
-
     border-radius: var(--radius-full);
-
     font-size: 11px;
     font-weight: 700;
   }
@@ -535,7 +312,6 @@
       flex-direction: column;
       height: auto;
       min-height: calc(100vh - 70px);
-
       padding: 40px 28px;
     }
 
@@ -581,8 +357,7 @@
       align-items: stretch;
     }
 
-    .btn-primary,
-    .btn-secondary {
+    .btn-primary {
       width: 100%;
     }
 

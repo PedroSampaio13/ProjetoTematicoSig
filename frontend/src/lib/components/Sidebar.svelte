@@ -16,12 +16,14 @@
 
   let {
     onSearch = (_q: string, _c: Set<Category>) => {},
+    onTimeSearch = (_lat: number, _lon: number, _radius_m: number, _c: Set<Category>) => {},
     onPlaceClick = (_p: Place) => {},
     places = [] as Place[],
     loading = false,
     searched = false,
   }: {
     onSearch?: (query: string, categories: Set<Category>) => void;
+    onTimeSearch?: (lat: number, lon: number, radius_m: number, categories: Set<Category>) => void;
     onPlaceClick?: (place: Place) => void;
     places?: Place[];
     loading?: boolean;
@@ -33,6 +35,8 @@
     new Set(["farmacia", "hospital", "restaurante"]),
   );
   let activeTime = $state<number>(15);
+  let geoLoading = $state<number | null>(null);
+  let geoError = $state<string | null>(null);
 
   const CATEGORIES = [
     {id: "farmacia" as Category, label: "Farmácias", color: "var(--color-farmacia)", icon: "💊"},
@@ -53,6 +57,7 @@
   };
 
   const TIMES = [5, 15, 25];
+  const TIME_RADII: Record<number, number> = { 5: 415, 15: 1245, 25: 2075 };
 
   function toggleCategory(cat: Category) {
     const next = new Set(activeCategories);
@@ -64,8 +69,24 @@
     activeCategories = next;
   }
 
-  function setTime(t: number) {
+  function handleTimeClick(t: number) {
     activeTime = t;
+    geoError = null;
+    if (!navigator.geolocation) {
+      geoError = 'Geolocalização não suportada neste browser.';
+      return;
+    }
+    geoLoading = t;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        geoLoading = null;
+        onTimeSearch(pos.coords.latitude, pos.coords.longitude, TIME_RADII[t], activeCategories);
+      },
+      () => {
+        geoLoading = null;
+        geoError = 'Acesso à localização recusado.';
+      }
+    );
   }
 
   function handleSearch(e: Event) {
@@ -174,13 +195,21 @@
         <button
           class="radius-btn"
           class:radius-active={activeTime === t}
-          onclick={() => setTime(t)}
+          onclick={() => handleTimeClick(t)}
           aria-pressed={activeTime === t}
+          disabled={geoLoading !== null}
         >
-          {t} min
+          {#if geoLoading === t}
+            <span class="spinner-sm" aria-label="A obter localização"></span>
+          {:else}
+            {t} min
+          {/if}
         </button>
       {/each}
     </div>
+    {#if geoError}
+      <p class="geo-error">{geoError}</p>
+    {/if}
   </div>
 
   <div class="sidebar-divider"></div>
@@ -469,6 +498,27 @@
     border-color: var(--color-farmacia);
     color: var(--color-farmacia);
     font-weight: 600;
+  }
+
+  .radius-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .spinner-sm {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--border);
+    border-top-color: var(--color-farmacia);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+
+  .geo-error {
+    font-size: 11px;
+    color: var(--color-red);
+    margin-top: 6px;
   }
 
   .sidebar-results {
