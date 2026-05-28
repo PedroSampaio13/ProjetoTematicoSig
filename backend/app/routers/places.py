@@ -314,6 +314,17 @@ def create_place_search(
         raise
 
 
+@router.get("/stats")
+def get_stats(db: Session = Depends(get_db)):
+    rows = db.execute(text("""
+        SELECT cat.name, COUNT(*) AS total
+        FROM point_of_interest poi
+        JOIN category cat ON poi.category_id = cat.id
+        GROUP BY cat.name
+    """)).fetchall()
+    return {row[0]: row[1] for row in rows}
+
+
 @router.get("/nearby")
 def get_nearby_places(
     lat: float = Query(..., ge=-90, le=90),

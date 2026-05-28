@@ -37,16 +37,17 @@
     restaurante: "...",
   });
 
+  function formatCount(n: number): string {
+    if (n >= 1000) return `${Math.floor(n / 100) / 10}k+`.replace(".0k+", "k+");
+    return String(n);
+  }
+
   onMount(async () => {
     try {
-      const [farmacias, hospitais, restaurantes] = await Promise.all([
-        fetch("http://localhost:8000/places/?categoria=farmacia").then((r) => r.json()),
-        fetch("http://localhost:8000/places/?categoria=hospital").then((r) => r.json()),
-        fetch("http://localhost:8000/places/?categoria=restaurante").then((r) => r.json()),
-      ]);
-      counts.farmacia = String(farmacias.length);
-      counts.hospital = String(hospitais.length);
-      counts.restaurante = String(restaurantes.length);
+      const data = await fetch("http://localhost:8000/places/stats").then((r) => r.json());
+      counts.farmacia = formatCount(data.farmacia ?? 0);
+      counts.hospital = formatCount(data.hospital ?? 0);
+      counts.restaurante = formatCount(data.restaurante ?? 0);
     } catch {
       counts.farmacia = "—";
       counts.hospital = "—";
