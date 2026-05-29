@@ -26,6 +26,7 @@
         })
       );
       places = results.flat();
+      mapRef?.clearRoute();
       routeSummary = null;
       routeError = null;
       mapRef?.addMarkers(places);
@@ -54,6 +55,7 @@
         })
       );
       places = results.flat();
+      mapRef?.clearRoute();
       routeSummary = null;
       routeError = null;
       mapRef?.addMarkers(places);
@@ -120,7 +122,7 @@
       <MapComponent
         bind:this={mapRef}
         onLocationSelect={handleLocationSelect}
-        onPlaceSelect={calculateRoute}
+        onPlaceSelect={onPlaceClick}
       />
       {#if routeSummary || routeError}
         <div class="route-summary">

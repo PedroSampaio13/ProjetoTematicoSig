@@ -15,6 +15,7 @@
   let loading = $state(false);
   let searched = $state(false);
   let selectedPoint = $state<SelectedPoint>(null);
+  let selectedLocation = $state<{ lat: number; lon: number } | null>(null);
 
   async function fetchPlaces(query: string, categories: Set<string>) {
     loading = true;
@@ -38,6 +39,7 @@
       );
 
       places = results.flat();
+      mapRef?.clearRoute();
       mapRef?.addMarkers(places);
     } finally {
       loading = false;
@@ -52,52 +54,78 @@
     fetchPlaces(query, categories);
   }
 
+  async function calculateRoute(place: any) {
+    if (!selectedLocation) return;
+
+    try {
+      const res = await fetch('http://localhost:8000/routes/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          origin: selectedLocation,
+          destination: { lat: place.lat, lon: place.lon },
+          profile: 'walking',
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+      const route = await res.json();
+      mapRef?.drawRoute(route.geometry);
+    } catch {
+      mapRef?.clearRoute();
+    }
+  }
+
   function handleMapClick(point: { lat: number; lon: number }) {
     selectedPoint = point;
+    selectedLocation = point;
+    mapRef?.clearRoute();
     console.log('Ponto selecionado no mapa:', selectedPoint);
   }
 
   async function handleTimeSearch(
-  lat: number,
-  lon: number,
-  radius_m: number,
-  categories: Set<string>
-) {
-  loading = true;
-  searched = true;
+    lat: number,
+    lon: number,
+    radius_m: number,
+    categories: Set<string>
+  ) {
+    loading = true;
+    searched = true;
 
-  try {
-    const activeCats = [...categories];
+    try {
+      const activeCats = [...categories];
 
-    const results = await Promise.all(
-      activeCats.map((cat) => {
-        const params = new URLSearchParams({
-          lat: String(lat),
-          lon: String(lon),
-          radius_m: String(radius_m),
-          categoria: cat
-        });
+      const results = await Promise.all(
+        activeCats.map((cat) => {
+          const params = new URLSearchParams({
+            lat: String(lat),
+            lon: String(lon),
+            radius_m: String(radius_m),
+            categoria: cat
+          });
 
-        return fetch(`http://localhost:8000/places/nearby?${params}`).then(
-          (r) => r.json()
-        );
-      })
-    );
+          return fetch(`http://localhost:8000/places/nearby?${params}`).then(
+            (r) => r.json()
+          );
+        })
+      );
 
-    const flatResults = results.flat();
+      const flatResults = results.flat();
 
-    console.log('Raio pesquisado:', radius_m);
-    console.log('Resultados recebidos:', flatResults.length);
+      console.log('Raio pesquisado:', radius_m);
+      console.log('Resultados recebidos:', flatResults.length);
 
-    places = flatResults;
-    mapRef?.addMarkers(places);
-  } finally {
-    loading = false;
+      places = flatResults;
+      mapRef?.clearRoute();
+      mapRef?.addMarkers(places);
+    } finally {
+      loading = false;
+    }
   }
-}
 
   function onPlaceClick(place: any) {
     mapRef?.focusPlace(place);
+    calculateRoute(place);
   }
 </script>
 
@@ -116,7 +144,11 @@
     />
 
     <main class="map-area">
-      <MapComponent bind:this={mapRef} onLocationSelect={handleMapClick} />
+      <MapComponent
+        bind:this={mapRef}
+        onLocationSelect={handleMapClick}
+        onPlaceSelect={onPlaceClick}
+      />
     </main>
   </div>
 </div>

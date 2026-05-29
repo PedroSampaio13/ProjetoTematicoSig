@@ -10,6 +10,7 @@
   import VectorSource from 'ol/source/Vector';
   import Feature from 'ol/Feature';
   import Point from 'ol/geom/Point';
+  import LineString from 'ol/geom/LineString';
   import { fromLonLat, toLonLat } from 'ol/proj';
   import { Style, Circle, Fill, Stroke, Text } from 'ol/style';
   import Overlay from 'ol/Overlay';
@@ -63,6 +64,7 @@
   let map: OlMap;
   let tileLayer: TileLayer<XYZ>;
   let vectorSource = new VectorSource();
+  let routeSource = new VectorSource();
   let selectedLocationSource = new VectorSource();
   let popup: Overlay;
 
@@ -83,6 +85,10 @@
       source: new XYZ({ url: TILES[$theme] }),
     });
 
+    const routeLayer = new VectorLayer({
+      source: routeSource,
+    });
+
     const vectorLayer = new VectorLayer({
       source: vectorSource,
     });
@@ -100,7 +106,7 @@
 
     map = new OlMap({
       target: mapContainer,
-      layers: [tileLayer, vectorLayer, selectedLocationLayer],
+      layers: [tileLayer, routeLayer, vectorLayer, selectedLocationLayer],
       overlays: [popup],
       view: new View({
         center: fromLonLat([-8.2, 39.5]),
@@ -204,6 +210,51 @@
     vectorSource.clear();
     popupData = null;
     popup?.setPosition(undefined);
+  }
+
+  export function clearRoute() {
+    routeSource.clear();
+  }
+
+  export function drawRoute(geometry: {
+    type?: string;
+    coordinates?: Array<[number, number]>;
+  } | Array<[number, number]>) {
+    if (!map) return;
+
+    const coordinates = Array.isArray(geometry)
+      ? geometry
+      : geometry.coordinates;
+
+    if (!coordinates || coordinates.length < 2) {
+      clearRoute();
+      return;
+    }
+
+    const lineCoordinates = coordinates.map(([lon, lat]) => fromLonLat([lon, lat]));
+    const routeFeature = new Feature({
+      geometry: new LineString(lineCoordinates),
+      kind: 'route',
+    });
+
+    routeFeature.setStyle(new Style({
+      stroke: new Stroke({
+        color: 'rgba(37, 99, 235, 0.95)',
+        width: 5,
+      }),
+    }));
+
+    routeSource.clear();
+    routeSource.addFeature(routeFeature);
+
+    const extent = routeFeature.getGeometry()?.getExtent();
+    if (extent) {
+      map.getView().fit(extent, {
+        padding: [60, 60, 60, 60],
+        duration: 600,
+        maxZoom: 16,
+      });
+    }
   }
 
   export function setSelectedLocation(lat: number, lon: number) {

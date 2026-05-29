@@ -9,6 +9,8 @@
   let places = $state<any[]>([]);
   let loading = $state(false);
   let searched = $state(false);
+  let selectedPoint = $state<{ lat: number; lon: number } | null>(null);
+  let selectedLocation = $state<{ lat: number; lon: number } | null>(null);
 
   async function fetchPlaces(query: string, categories: Set<string>) {
     loading = true;
@@ -23,6 +25,7 @@
         })
       );
       places = results.flat();
+      mapRef?.clearRoute();
       mapRef?.addMarkers(places);
     } finally {
       loading = false;
@@ -49,14 +52,44 @@
         })
       );
       places = results.flat();
+      mapRef?.clearRoute();
       mapRef?.addMarkers(places);
     } finally {
       loading = false;
     }
   }
 
+  async function calculateRoute(place: any) {
+    if (!selectedLocation) return;
+
+    try {
+      const res = await fetch('http://localhost:8000/routes/calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          origin: selectedLocation,
+          destination: { lat: place.lat, lon: place.lon },
+          profile: 'walking',
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+      const route = await res.json();
+      mapRef?.drawRoute(route.geometry);
+    } catch {
+      mapRef?.clearRoute();
+    }
+  }
+
+  function handleMapClick(point: { lat: number; lon: number }) {
+    selectedPoint = point;
+    selectedLocation = point;
+    mapRef?.clearRoute();
+  }
+
   function onPlaceClick(place: any) {
     mapRef?.focusPlace(place);
+    calculateRoute(place);
   }
 </script>
 
@@ -64,9 +97,9 @@
   <Navbar activeTab="restaurantes" />
 
   <div class="app-body">
-    <Sidebar onSearch={handleSearch} onTimeSearch={handleTimeSearch} {places} {loading} {searched} {onPlaceClick} />
+    <Sidebar onSearch={handleSearch} onTimeSearch={handleTimeSearch} selectedPoint={selectedPoint} {places} {loading} {searched} {onPlaceClick} />
     <main class="map-area">
-      <MapComponent bind:this={mapRef} />
+      <MapComponent bind:this={mapRef} onLocationSelect={handleMapClick} onPlaceSelect={onPlaceClick} />
     </main>
   </div>
 </div>
