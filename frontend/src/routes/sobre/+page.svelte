@@ -2,12 +2,12 @@
     import Navbar from "$lib/components/Navbar.svelte";
 
     const desenvolvedores = [
-        { nome: "Pedro Sampaio", numero: "119213", img: "/images/pedro.jpg", color: "farmacia" },
-        { nome: "Ana Beatriz Vicente", numero: "114509", img: "/images/ana.jpg", color: "hospital" },
-        { nome: "Tiago da Silva Coelho", numero: "109185", img: "/images/tiago.jpg", color: "restaurante" },
-        { nome: "Guyvania Rosa", numero: "101515", img: "/images/guyvania.jpg", color: "farmacia" },
-        { nome: "Diogo Lemos", numero: "121286", img: "/images/diogo.jpg", color: "hospital" },
-        { nome: "Sara Presa", numero: "121354", img: "/images/sara.jpg", color: "restaurante" },
+        { nome: "Pedro Sampaio", numero: "119213", img: "/images/pedro.jpeg", color: "farmacia" },
+        { nome: "Ana Beatriz Vicente", numero: "114509", img: "/images/ana.jpeg", color: "hospital" },
+        { nome: "Tiago da Silva Coelho", numero: "109185", img: "/images/tiago.jpeg", color: "restaurante" },
+        { nome: "Guyvania Rosa", numero: "101515", img: "/images/guyvania.svg", color: "farmacia" },
+        { nome: "Diogo Lemos", numero: "121286", img: "/images/diogo.jpeg", color: "hospital" },
+        { nome: "Sara Presa", numero: "121354", img: "/images/sara.jpeg", color: "restaurante" },
     ];
 
     const tecnologias = [
@@ -110,7 +110,7 @@
         <div class="creators-grid">
             {#each desenvolvedores as d}
                 <div class="creator-card card-{d.color}">
-                    <img src={d.img} alt={d.nome} class="creator-img" />
+                    <img src={d.img} alt={d.nome} class="creator-img" loading="lazy" />
                     <div>
                         <h3 class="font-sora">{d.nome}</h3>
                         <p class="text-secondary">Nº {d.numero}</p>

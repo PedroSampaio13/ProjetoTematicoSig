@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Guyvania Rosa">
+	<defs>
+		<linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+			<stop offset="0%" stop-color="#862e9c" />
+			<stop offset="100%" stop-color="#cc5de8" />
+		</linearGradient>
+	</defs>
+	<rect width="256" height="256" rx="40" fill="url(#g)" />
+	<circle cx="128" cy="102" r="48" fill="#fff" fill-opacity="0.18" />
+	<path d="M76 208c8-34 36-56 52-56s44 22 52 56" fill="#ffffff" fill-opacity="0.22" />
+	<text x="128" y="142" text-anchor="middle" font-family="Arial, sans-serif" font-size="64"
+		font-weight="700" fill="#ffffff">GR</text>
+</svg>
