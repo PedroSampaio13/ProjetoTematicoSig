@@ -136,6 +136,7 @@
     <Sidebar
       onSearch={handleSearch}
       onTimeSearch={handleTimeSearch}
+      initialCategories={['farmacia']}
       selectedPoint={selectedPoint}
       {places}
       {loading}

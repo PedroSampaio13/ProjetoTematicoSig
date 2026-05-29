@@ -23,6 +23,7 @@ let {
   onSearch = (_q: string, _c: Set<Category>) => {},
   onTimeSearch = (_lat: number, _lon: number, _radius_m: number, _c: Set<Category>) => {},
   onPlaceClick = (_p: Place) => {},
+  initialCategories = ["farmacia", "hospital", "restaurante"] as Category[],
   selectedPoint = null as SelectedPoint,
   places = [] as Place[],
   loading = false,
@@ -31,6 +32,7 @@ let {
   onSearch?: (query: string, categories: Set<Category>) => void;
   onTimeSearch?: (lat: number, lon: number, radius_m: number, categories: Set<Category>) => void;
   onPlaceClick?: (place: Place) => void;
+  initialCategories?: Category[];
   selectedPoint?: SelectedPoint;
   places?: Place[];
   loading?: boolean;
@@ -39,7 +41,7 @@ let {
 
   let searchQuery = $state("");
   let activeCategories = $state<Set<Category>>(
-    new Set(["farmacia", "hospital", "restaurante"]),
+    new Set(initialCategories),
   );
   let activeTime = $state<number>(15);
   let geoLoading = $state<number | null>(null);
@@ -77,21 +79,25 @@ let {
   }
 
   function handleTimeClick(t: number) {
-  activeTime = t;
-  geoError = null;
-
-  if (!selectedPoint) {
-    geoError = 'Clica primeiro num ponto no mapa para pesquisares nessa zona.';
-    return;
+    activeTime = t;
+    geoError = null;
   }
 
-  onTimeSearch(
-    selectedPoint.lat,
-    selectedPoint.lon,
-    TIME_RADII[t],
-    activeCategories
-  );
-}
+  function handleFindByTime() {
+    geoError = null;
+
+    if (!selectedPoint) {
+      geoError = 'Clica primeiro num ponto no mapa para pesquisares nessa zona.';
+      return;
+    }
+
+    onTimeSearch(
+      selectedPoint.lat,
+      selectedPoint.lon,
+      TIME_RADII[activeTime],
+      activeCategories
+    );
+  }
 
   function handleSearch(e: Event) {
     e.preventDefault();
@@ -211,6 +217,14 @@ let {
         </button>
       {/each}
     </div>
+    <button
+      type="button"
+      class="find-btn"
+      onclick={handleFindByTime}
+      disabled={loading || geoLoading !== null}
+    >
+      Encontrar
+    </button>
     {#if geoError}
       <p class="geo-error">{geoError}</p>
     {/if}
@@ -478,6 +492,30 @@ let {
     gap: 6px;
   }
 
+  .find-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 8px 0;
+    background: var(--color-farmacia);
+    border: 1px solid var(--color-farmacia);
+    border-radius: var(--radius-md);
+    font-family: "Inter", sans-serif;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--text-inverse);
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+
+  .find-btn:hover {
+    filter: brightness(0.96);
+  }
+
+  .find-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
   .radius-btn {
     flex: 1;
     padding: 7px 0;
@@ -630,7 +668,7 @@ let {
     gap: 10px;
     min-width: 0;
   }
-  
+
   .result-dot {
     justify-content: left;
     width: 30px;
