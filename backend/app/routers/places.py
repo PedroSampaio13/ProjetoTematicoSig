@@ -1,6 +1,9 @@
 import json
 import unicodedata
 from typing import Optional
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+from urllib.request import urlopen
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
@@ -12,7 +15,9 @@ from app.db.db import SessionLocal
 router = APIRouter(prefix="/places", tags=["places"])
 
 WALKING_METERS_PER_MINUTE = 83
+ROUTE_REQUEST_TIMEOUT_SECONDS = 6
 PLACES_PER_MAJOR_CITY = 3
+WALKING_ROUTE_BASE_URL = "https://routing.openstreetmap.de/routed-foot"
 MAJOR_PORTUGAL_CITIES = (
     {"name": "Lisboa", "lat": 38.7223, "lon": -9.1393},
     {"name": "Porto", "lat": 41.1579, "lon": -8.6291},
@@ -94,6 +99,111 @@ def format_places(rows):
         }
         for row in rows
     ]
+
+
+def format_candidate_places(rows):
+    return [
+        {
+            "id": row[0],
+            "nome": row[1],
+            "morada": row[2],
+            "lat": float(row[3]),
+            "lon": float(row[4]),
+            "categoria": row[5],
+        }
+        for row in rows
+    ]
+
+
+def fetch_walking_route_table(
+    origin_lat: float,
+    origin_lon: float,
+    places: list[dict],
+):
+    if not places:
+        return []
+
+    coordinates = ";".join(
+        [f"{origin_lon},{origin_lat}"]
+        + [f"{place['lon']},{place['lat']}" for place in places]
+    )
+    params = urlencode({
+        "sources": "0",
+        "destinations": ";".join(str(index) for index in range(1, len(places) + 1)),
+        "annotations": "duration,distance",
+    })
+    url = f"{WALKING_ROUTE_BASE_URL}/table/v1/foot/{coordinates}?{params}"
+
+    with urlopen(url, timeout=ROUTE_REQUEST_TIMEOUT_SECONDS) as response:
+        data = json.loads(response.read().decode("utf-8"))
+
+    durations = data.get("durations", [[]])[0]
+    distances = data.get("distances", [[]])[0]
+
+    if len(durations) != len(places) or len(distances) != len(places):
+        raise ValueError("OSRM table response does not match candidate count")
+
+    return [
+        {"distance_m": distance_m, "duration_s": duration_s}
+        for distance_m, duration_s in zip(distances, durations)
+    ]
+
+
+def fetch_walking_route(origin_lat: float, origin_lon: float, place: dict):
+    coordinates = f"{origin_lon},{origin_lat};{place['lon']},{place['lat']}"
+    url = (
+        f"{WALKING_ROUTE_BASE_URL}/route/v1/foot/{coordinates}"
+        "?overview=false&steps=false"
+    )
+
+    with urlopen(url, timeout=ROUTE_REQUEST_TIMEOUT_SECONDS) as response:
+        data = json.loads(response.read().decode("utf-8"))
+
+    routes = data.get("routes", [])
+    if not routes:
+        return None
+
+    route = routes[0]
+    return {
+        "distance_m": route.get("distance"),
+        "duration_s": route.get("duration"),
+    }
+
+
+def format_routed_walking_places(
+    rows,
+    origin_lat: float,
+    origin_lon: float,
+    max_travel_time: int,
+):
+    places = format_candidate_places(rows)
+
+    try:
+        route_metrics = fetch_walking_route_table(origin_lat, origin_lon, places)
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError, ValueError):
+        route_metrics = []
+        for place in places:
+            try:
+                route_metrics.append(fetch_walking_route(origin_lat, origin_lon, place))
+            except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
+                route_metrics.append(None)
+
+    routed_places = []
+    for place, metric in zip(places, route_metrics):
+        if not metric or metric["distance_m"] is None or metric["duration_s"] is None:
+            continue
+
+        tempo_min = max(1, round(float(metric["duration_s"]) / 60))
+        if tempo_min > max_travel_time:
+            continue
+
+        routed_places.append({
+            **place,
+            "distancia_m": round(float(metric["distance_m"])),
+            "tempo_min": tempo_min,
+        })
+
+    return sorted(routed_places, key=lambda place: place["tempo_min"])[:50]
 
 
 def format_estimated_walking_places(rows, max_travel_time: int):
@@ -275,9 +385,11 @@ def create_place_search(
             radius_m=radius_m,
             categorias=categorias,
         )
-        routed_places = format_estimated_walking_places(
+        routed_places = format_routed_walking_places(
             candidate_rows,
-            payload.max_travel_time,
+            origin_lat=payload.lat,
+            origin_lon=payload.lon,
+            max_travel_time=payload.max_travel_time,
         )
 
         for place in routed_places:
@@ -336,7 +448,13 @@ def get_nearby_places(
     normalized_categoria = normalize_category(categoria)
     categorias = [normalized_categoria] if normalized_categoria else []
     rows = find_places_within_radius(db, lat, lon, radius_m, categorias)
-    return format_places(rows)
+    max_travel_time = max(1, round(radius_m / WALKING_METERS_PER_MINUTE))
+    return format_routed_walking_places(
+        rows,
+        origin_lat=lat,
+        origin_lon=lon,
+        max_travel_time=max_travel_time,
+    )
 
 
 @router.get("/")

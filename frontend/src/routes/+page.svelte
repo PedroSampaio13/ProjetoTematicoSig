@@ -87,7 +87,7 @@
 
       <!-- Botão -->
       <div class="cta-buttons">
-        <button class="btn-primary" onclick={() => goto('/farmacias')}>
+        <button class="btn-primary" onclick={() => goto('/pesquisa')}>
           Começar a Pesquisar
         </button>
       </div>

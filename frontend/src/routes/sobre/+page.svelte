@@ -51,6 +51,7 @@
 </script>
 
 <div class="about-container">
+    <br><br>
     <Navbar activeTab="sobre" />
 
     <header class="about-header">
@@ -129,6 +130,9 @@
             </div>
         {/each}
     </section>
+    <br> <br> <br>
+
+
 </div>
 
 <style>
