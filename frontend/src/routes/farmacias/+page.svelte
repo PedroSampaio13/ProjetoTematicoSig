@@ -50,10 +50,6 @@
     fetchPlaces('', new Set(['farmacia']));
   });
 
-  function handleSearch(query: string, categories: Set<string>) {
-    fetchPlaces(query, categories);
-  }
-
   async function calculateRoute(place: any) {
     if (!selectedLocation) return;
 
@@ -134,7 +130,6 @@
 
   <div class="app-body">
     <Sidebar
-      onSearch={handleSearch}
       onTimeSearch={handleTimeSearch}
       initialCategories={['farmacia']}
       selectedPoint={selectedPoint}

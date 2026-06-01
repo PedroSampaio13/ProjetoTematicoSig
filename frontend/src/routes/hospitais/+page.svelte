@@ -35,10 +35,6 @@
     fetchPlaces('', new Set(['hospital']));
   });
 
-  function handleSearch(query: string, categories: Set<string>) {
-    fetchPlaces(query, categories);
-  }
-
   async function handleTimeSearch(lat: number, lon: number, radius_m: number, categories: Set<string>) {
     loading = true;
     searched = true;
@@ -96,7 +92,7 @@
   <Navbar activeTab="hospitais" />
 
   <div class="app-body">
-    <Sidebar onSearch={handleSearch} onTimeSearch={handleTimeSearch} initialCategories={['hospital']} selectedPoint={selectedPoint} {places} {loading} {searched} {onPlaceClick} />
+    <Sidebar onTimeSearch={handleTimeSearch} initialCategories={['hospital']} selectedPoint={selectedPoint} {places} {loading} {searched} {onPlaceClick} />
     <main class="map-area">
       <MapComponent
         bind:this={mapRef}

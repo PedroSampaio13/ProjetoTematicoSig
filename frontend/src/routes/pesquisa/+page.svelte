@@ -17,46 +17,6 @@
   let selectedPoint = $state<SelectedPoint>(null);
   let selectedLocation = $state<{ lat: number; lon: number } | null>(null);
 
-  async function fetchPlaces(query: string, categories: Set<Category>) {
-    loading = true;
-    searched = true;
-
-    try {
-      const activeCats = [...categories];
-
-      if (activeCats.length === 0) {
-        places = [];
-        mapRef?.clearRoute();
-        mapRef?.addMarkers([]);
-        return;
-      }
-
-      const results = await Promise.all(
-        activeCats.map((cat) => {
-          const params = new URLSearchParams({ categoria: cat });
-
-          if (query) {
-            params.set('query', query);
-          }
-
-          return fetch(`http://localhost:8000/places/?${params}`).then((r) =>
-            r.json()
-          );
-        })
-      );
-
-      places = results.flat();
-      mapRef?.clearRoute();
-      mapRef?.addMarkers(places);
-    } finally {
-      loading = false;
-    }
-  }
-
-  function handleSearch(query: string, categories: Set<Category>) {
-    fetchPlaces(query, categories);
-  }
-
   async function calculateRoute(place: any) {
     if (!selectedLocation) return;
 
@@ -138,7 +98,6 @@
 
   <div class="app-body">
     <Sidebar
-      onSearch={handleSearch}
       onTimeSearch={handleTimeSearch}
       initialCategories={[]}
       selectedPoint={selectedPoint}

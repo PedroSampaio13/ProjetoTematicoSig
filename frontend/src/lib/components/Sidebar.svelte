@@ -20,7 +20,6 @@
 } | null;
 
 let {
-  onSearch = (_q: string, _c: Set<Category>) => {},
   onTimeSearch = (_lat: number, _lon: number, _radius_m: number, _c: Set<Category>) => {},
   onPlaceClick = (_p: Place) => {},
   initialCategories = ["farmacia", "hospital", "restaurante"] as Category[],
@@ -29,7 +28,6 @@ let {
   loading = false,
   searched = false,
 }: {
-  onSearch?: (query: string, categories: Set<Category>) => void;
   onTimeSearch?: (lat: number, lon: number, radius_m: number, categories: Set<Category>) => void;
   onPlaceClick?: (place: Place) => void;
   initialCategories?: Category[];
@@ -39,7 +37,6 @@ let {
   searched?: boolean;
 } = $props();
 
-  let searchQuery = $state("");
   let activeCategories = $state<Set<Category>>(
     new Set(initialCategories),
   );
@@ -99,16 +96,6 @@ let {
     );
   }
 
-  function handleSearch(e: Event) {
-    e.preventDefault();
-    onSearch(searchQuery, activeCategories);
-  }
-
-  function clearSearch() {
-    searchQuery = "";
-    onSearch("", activeCategories);
-  }
-
   function formatDistance(meters: number) {
     if (meters < 1000) return `${meters} m`;
     return `${(meters / 1000).toFixed(1).replace(".", ",")} km`;
@@ -116,65 +103,6 @@ let {
 </script>
 
 <aside class="sidebar">
-  <!-- Pesquisa -->
-  <div class="sidebar-section">
-    <form class="search-wrapper" onsubmit={handleSearch}>
-      <span class="search-icon">
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <circle cx="11" cy="11" r="8" /><line
-            x1="21"
-            y1="21"
-            x2="16.65"
-            y2="16.65"
-          />
-        </svg>
-      </span>
-      <input
-        type="search"
-        class="search-input"
-        placeholder="Pesquisar local..."
-        bind:value={searchQuery}
-        aria-label="Pesquisar local"
-      />
-      {#if searchQuery}
-        <button
-          type="button"
-          class="search-clear"
-          onclick={clearSearch}
-          aria-label="Limpar pesquisa"
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" /><line
-              x1="6"
-              y1="6"
-              x2="18"
-              y2="18"
-            />
-          </svg>
-        </button>
-      {/if}
-    </form>
-  </div>
-
-  <div class="sidebar-divider"></div>
-
   <!-- Filtros de categoria -->
   <div class="sidebar-section">
     <p class="section-label">Categoria</p>
@@ -267,7 +195,7 @@ let {
             y2="16.65"
           />
         </svg>
-        <p>Usa a pesquisa ou clica no mapa</p>
+        <p>Clica no mapa para escolher uma zona</p>
       </div>
     {:else if places.length === 0}
       <div class="results-empty">
@@ -377,66 +305,6 @@ let {
     text-transform: uppercase;
     color: var(--text-muted);
     margin-bottom: 10px;
-  }
-
-  .search-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
-
-  .search-icon {
-    position: absolute;
-    left: 11px;
-    color: var(--text-muted);
-    pointer-events: none;
-    display: flex;
-  }
-
-  .search-input {
-    width: 100%;
-    height: 38px;
-    padding: 0 36px 0 36px;
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-md);
-    font-family: "Inter", sans-serif;
-    font-size: 13.5px;
-    color: var(--text-primary);
-    transition:
-      border-color var(--transition),
-      box-shadow var(--transition);
-    outline: none;
-  }
-
-  .search-input::placeholder {
-    color: var(--text-muted);
-  }
-
-  .search-input:focus {
-    border-color: var(--color-farmacia);
-    box-shadow: 0 0 0 3px var(--color-farmacia-10);
-  }
-
-  .search-input::-webkit-search-cancel-button {
-    display: none;
-  }
-
-  .search-clear {
-    position: absolute;
-    right: 10px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text-muted);
-    display: flex;
-    padding: 2px;
-    border-radius: var(--radius-sm);
-    transition: color var(--transition);
-  }
-
-  .search-clear:hover {
-    color: var(--text-primary);
   }
 
   .category-chips {
