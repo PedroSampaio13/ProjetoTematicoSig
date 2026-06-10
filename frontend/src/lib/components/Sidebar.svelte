@@ -508,6 +508,7 @@ let {
     border-radius: var(--radius-md);
     cursor: pointer;
     text-align: left;
+    overflow: hidden;
     transition:
       background var(--transition),
       border-color var(--transition);
@@ -534,6 +535,7 @@ let {
   .result-info-dot {
     display: flex;
     gap: 10px;
+    width: 100%;
     min-width: 0;
   }
 
@@ -547,8 +549,8 @@ let {
   }
 
   .result-info {
-    width: auto;
-    justify-content: right;
+    flex: 1;
+    width: 100%;
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -560,17 +562,17 @@ let {
     font-size: 15px;
     font-weight: 600;
     color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .result-morada {
     font-size: 11.5px;
     color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   .result-bottom {
