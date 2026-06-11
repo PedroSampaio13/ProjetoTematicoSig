@@ -16,7 +16,6 @@
         { label: "FastAPI", color: "restaurante" },
         { label: "PostgreSQL", color: "farmacia" },
         { label: "PostGIS", color: "hospital" },
-        { label: "Redis", color: "restaurante" },
     ];
 
     const funcionalidades = [
